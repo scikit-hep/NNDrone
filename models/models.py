@@ -1,4 +1,4 @@
-from utilities import sigmoid_activation, sigmoid_prime, cost_derivative
+from utilities.utilities import sigmoid_activation, sigmoid_prime, cost_derivative
 import numpy as np
 
 
