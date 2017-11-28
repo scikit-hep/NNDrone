@@ -1,9 +1,15 @@
 import numpy as np
+from math import log
 
 
 # sigmoid activation as per example
 def sigmoid_activation(x):
     return 1.0 / (1.0+np.exp(-x))
+
+
+# inverted sigmoid activation
+def inv_sigmoid_activation(x):
+    return -1.0 * np.log((1.0-x)/x) if x > 0.0 else 0.0
 
 
 # corresponding derivative

@@ -1,4 +1,5 @@
-from utilities.utilities import sigmoid_activation, sigmoid_prime, cost_derivative
+from utilities.utilities import sigmoid_activation, sigmoid_prime, cost_derivative, inv_sigmoid_activation
+import pickle
 import numpy as np
 
 
@@ -7,6 +8,7 @@ class BaseModel:
         self._n_features = n_features
         self._n_outputs = n_outputs
         self._layers = []
+        self._initialiser = None
 
     def add_layer(self, outsize):
         # find last layer size
@@ -48,6 +50,8 @@ class BaseModel:
 
         for c, layer in enumerate(self._layers):
             in_mat = sigmoid_activation(self.eval_layer(in_mat, c, debug))
+            if c == len(self._layers)-2:
+                self._initialiser = in_mat
             if debug:
                 print 'Evaluated layer: %s' % (c+1)
                 print 'Output shape: (%s,%s)' % (in_mat.shape[0], in_mat.shape[1])
@@ -142,3 +146,12 @@ class BaseModel:
         for c, layer in enumerate(self._layers):
             layer['bias'] = layer['bias'] - np.multiply(l_rate/len(in_data_x), nabla_b[c])
             layer['weight'] = layer['weight'] - np.multiply(l_rate/len(in_data_x), nabla_w[c])
+
+    def save_model(self, output_name):
+        f_out = open(output_name, 'wb')
+        pickle.dump(self._layers, f_out)
+        f_out.close()
+
+    def load_model(self, input_name):
+        f_in = open(input_name, 'rb')
+        self._layers = pickle.load(f_in)
