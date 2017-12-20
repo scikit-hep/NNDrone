@@ -28,7 +28,7 @@ hd_hist([sig_pt, bkg_pt], 'plots/pt_comp.pdf'
 
 hd_hist([sig_eta, bkg_eta], 'plots/eta_comp.pdf'
         , [1.0, 6.0], [0.0, 400.0]
-        , "Mother $eta$", "Events", etabins
+        , "Mother $\eta$", "Events", etabins
         , ['signal', 'background'])
 
 hd_hist([sig_minPT, bkg_minPT], 'plots/minpt_comp.pdf'
@@ -38,7 +38,7 @@ hd_hist([sig_minPT, bkg_minPT], 'plots/minpt_comp.pdf'
 
 hd_hist([sig_minETA, bkg_minETA], 'plots/mineta_comp.pdf'
         , [1.0, 6.0], [0.0, 400.0]
-        , "min. $eta$", "Events", etabins
+        , "min. $\eta$", "Events", etabins
         , ['signal', 'background'])
 
 hd_hist([sig_maxPT, bkg_maxPT], 'plots/maxpt_comp.pdf'
@@ -48,5 +48,5 @@ hd_hist([sig_maxPT, bkg_maxPT], 'plots/maxpt_comp.pdf'
 
 hd_hist([sig_maxETA, bkg_maxETA], 'plots/maxeta_comp.pdf'
         , [1.0, 6.0], [0.0, 400.0]
-        , "min. $eta$", "Events", etabins
+        , "min. $\eta$", "Events", etabins
         , ['signal', 'background'])
