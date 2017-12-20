@@ -109,7 +109,7 @@ histSigTest.Draw("E SAME")
 histBgTrain.Draw("E SAME")
 histBgTest.Draw("E SAME")
 
-legend = TLegend(0.35, 0.7, 0.65, 0.9)
+legend = TLegend(0.3, 0.6, 0.7, 0.9)
 legend.AddEntry(histSigTrain, "Training signal", "l")
 legend.AddEntry(histSigTest, "", "l")
 legend.AddEntry(histBgTrain, "", "l")
