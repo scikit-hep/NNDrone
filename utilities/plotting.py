@@ -18,3 +18,17 @@ def hd_hist(data, name, x_range, y_range, xname, yname, bins, labels):
     plt.legend(loc='upper right')
     plt.savefig(name)
     plt.clf()
+
+
+def scatter(x, y, xlim, ylim, xlabel, ylabel, title, savename, line=True):
+    fig = plt.figure()
+    plt.scatter(x, y)
+    plt.xlim(xlim)
+    plt.ylim(ylim)
+    if line:
+        plt.plot([0.0, 1.0], [0.0, 1.0], 'k-')
+    fig.suptitle(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.savefig(savename)
+    plt.clf()
