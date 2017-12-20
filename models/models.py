@@ -147,6 +147,41 @@ class BaseModel:
             layer['bias'] = layer['bias'] - np.multiply(l_rate/len(in_data_x), nabla_b[c])
             layer['weight'] = layer['weight'] - np.multiply(l_rate/len(in_data_x), nabla_w[c])
 
+    def add_layer_dynamic(self):
+        # Add identity layer to the second to last layer
+        # layer evaluation reminder:
+        # in_mat = sigmoid_activation(self.eval_layer(in_mat, c, debug))
+        sq_size = self._layers[-2]['weight'].shape[0]
+        layer = dict()
+        layer['weight'] = np.zeros((sq_size, sq_size), dtype=float)
+        for n in range(self._initialiser.shape[0]):
+            if self._initialiser[n] > 0.0:
+                layer['weight'][n][n] = inv_sigmoid_activation(self._initialiser[n])/self._initialiser[n]
+            else:
+                layer['weight'][n][n] = 1.0
+        layer['bias'] = np.zeros((sq_size, 1), dtype=float)
+
+        print 'BaseModel: Requested model change...'
+        print 'BaseModel: Adding weights matrix: (%s,%s)' % (layer['weight'].shape[0], layer['weight'].shape[1])
+        print 'BaseModel: Adding bias vector: (%s,%s)' % (layer['bias'].shape[0], layer['bias'].shape[1])
+
+        self._layers.insert(len(self._layers)-1, layer)
+
+    def expand_layer_dynamic(self, layer):
+        # Pad with zeros to give some more freedom to
+        # an intermediate layer.
+        # This must be done to opposite indices
+        # in consecutive layers
+
+        _layer = self._layers[layer]
+        _layer_p1 = self._layers[layer+1]
+        # m in n out
+        # layer -> m in, n+1 out
+        # layer+1 -> m+1 in, n out
+        np.pad(_layer['weight'], [(0, 0), (0, 1)], mode='constant', constant_values=0)
+        np.pad(_layer['bias'], [(0, 0), (0, 1)], mode='constant', constant_values=0)
+        np.pad(_layer_p1['weight'], [(0, 1), (0, 0)], mode='constant', constant_values=0)
+
     def save_model(self, output_name):
         f_out = open(output_name, 'wb')
         pickle.dump(self._layers, f_out)
