@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Converter from Scikit-Learn MLP to Keras lwtnn JSON
 
