@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Converter from Scikit-Learn MLP to Keras lwtnn JSON
 
@@ -113,6 +113,26 @@ class MLP2JSON(object):
             self._save_vars_json()  # save vars, scale and offset in a JSON file
         self._dump_json()
 
+        return
+
+
+    def _read_model_pkl(self):
+        '''Load MLP from *.pkl file'''
+        print(" - Reading MLP from pkl file")
+
+        self.mlp = joblib.load(self.model_pkl_file_)  # load MLP
+
+        self.hidden_layer_sizes_ = self.mlp.hidden_layer_sizes    # tuple of hidden layer sizes, length = n_layers - 2
+        self.n_hidden_layers_    = len(self.hidden_layer_sizes_)  # number of hidden layers
+        self.activation_         = self.mlp.activation            # main activation function
+        self.weights_            = self.mlp.coefs_                # weight vectors, length = n_layers - 1
+        self.biases_             = self.mlp.intercepts_           # bias vectors, length = n_layers - 1
+        self.n_layers_           = self.mlp.n_layers_             # number of layers = input + hidden + output
+        self.n_outputs_          = self.mlp.n_outputs_            # number of outputs
+        self.out_activation_     = self.mlp.out_activation_       # output layer activation function
+
+        return
+
 
     def _load_vars(self):
         '''Make sure variables, weights & biases are read & setup correctly'''
@@ -165,8 +185,8 @@ class MLP2JSON(object):
 
         try:
             var_file = open(self.file_with_vars_, 'r').readlines()
-            print("ERROR: Could not open variable-list file for reading. Exiting...")
         except Exception as e:
+            print("ERROR: Could not open variable-list file for reading. Exiting...")
             raise e
         else:
             self.input_names_ = [word for line in var_file for word in line.split()]
@@ -201,24 +221,6 @@ class MLP2JSON(object):
         return
 
 
-    def _read_model_pkl(self):
-        '''Load MLP from *.pkl file'''
-        print(" - Reading MLP from pkl file")
-
-        self.mlp = joblib.load(self.model_pkl_file_)  # load MLP
-
-        self.hidden_layer_sizes_ = self.mlp.hidden_layer_sizes    # tuple of hidden layer sizes, length = n_layers - 2
-        self.n_hidden_layers_    = len(self.hidden_layer_sizes_)  # number of hidden layers
-        self.activation_         = self.mlp.activation            # main activation function
-        self.weights_            = self.mlp.coefs_                # weight vectors, length = n_layers - 1
-        self.biases_             = self.mlp.intercepts_           # bias vectors, length = n_layers - 1
-        self.n_layers_           = self.mlp.n_layers_             # number of layers = input + hidden + output
-        self.n_outputs_          = self.mlp.n_outputs_            # number of outputs
-        self.out_activation_     = self.mlp.out_activation_       # output layer activation function
-
-        return
-
-
     def _convert_model(self):
         '''Convert MLP to lwtnn'''
         print(" - Converting MLP to lwtnn dictionary")
@@ -226,13 +228,13 @@ class MLP2JSON(object):
         if any([self.n_layers_ != len(elem)+1 for elem in [self.weights_, self.biases_] ]):
             print("ERROR: Number of hidden layers ({0}) does not\n"
                   "       match length of weights ({1}) or biases ({2})!\n"
-                  "       Exiting...".format(self.n_layers_, self.weights_+1, self.biases_+1))
+                  "       Exiting...".format(self.n_layers_, len(self.weights_)+1, len(self.biases_)+1))
             sys.exit(1)
 
         for l in range(self.n_layers_-1):
             layer = {}
             layer["architecture"] = self.arch_
-            layer["activation"]   = self.activation_ if l != self.n_layers_-2 else self.out_activation_
+            layer["activation"]   = self.activation_dict_[self.activation_] if l != self.n_layers_-2 else self.activation_dict_[self.out_activation_]
             layer["weights"]      = self.weights_[l].T.flatten().tolist()
             layer["bias"]         = self.biases_[l].flatten().tolist()
 
@@ -314,7 +316,6 @@ if __name__ == '__main__':
     conv.output_file_     = args.output
     conv.scaler_pkl_file_ = args.scaler
     conv.scale_vars_      = True if conv.scaler_pkl_file_ is not None else False
-    conv.var_spec_file_   = args.var_spec
     conv.save_vars_json_  = True if args.save_json is not None or args.subcommand == 'list' else False
 
     if args.subcommand == 'list':
@@ -323,6 +324,7 @@ if __name__ == '__main__':
         conv.var_json_file_ = args.save_json if args.save_json is not None else str(conv.file_with_vars_).split('.')[0] + '_gen.json'
         conv.misc_          = {"scikit-learn": "0.19.1"}
     elif args.subcommand == 'spec':
+        conv.var_spec_file_   = args.var_spec
         conv.var_json_file_ = args.save_json if args.save_json is not None else str(conv.var_spec_file_).split('.')[0] + '_gen.json'
 
     # Run it
