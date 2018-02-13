@@ -24,10 +24,11 @@ but that are created in an equivalent way to the training data.
 The test score will be determined according to the following figure-of-merit
 popular in particle physics:
 
+![](http://latex.codecogs.com/svg.latex?%5Csigma%3D%5Calpha%5Cfrac%7BS%7D%7B%5Csqrt%7BS%2BB%7D%7D)
 $\sigma=\alpha\frac{S}{\sqrt{S+B}}$
 
-where $S$ is the number of signal events passing the classifier in the
-training sample and $B$ is the number of background events passing the classifier.
+where S is the number of signal events passing the classifier in the
+training sample and B is the number of background events passing the classifier.
 
 ##### The factor $\alpha$
 
@@ -36,11 +37,9 @@ training sample and $B$ is the number of background events passing the classifie
 The factor $\alpha$ is a bonus multiplier for those wishing an extra challenge.
 This is defined as
 
-![](http://latex.codecogs.com/svg.latex?%5Calpha%3D%281%2B%5Cfrac%7B1%7D%7B%5Cchi%5E%7B2%7D%7D)
+![](http://latex.codecogs.com/svg.latex?%5Calpha%3D%281%2B%5Cfrac%7B1%7D%7B%5Cchi%5E%7B2%7D%7D%29)
 
-$\alpha=(1+\frac{1}{\chi^{2})$
-
-where $\chi^{2}$ is taken as the sum of point-by-point differences in
+where ![](http://latex.codecogs.com/svg.latex?%5Cchi%5E%7B2%7D) is taken as the sum of point-by-point differences in
 the output predictions between the drone and the SciKit-learn classifier.
 
 # Submitting results
