@@ -36,6 +36,8 @@ training sample and $B$ is the number of background events passing the classifie
 The factor $\alpha$ is a bonus multiplier for those wishing an extra challenge.
 This is defined as
 
+http://latex.codecogs.com/svg.latex?%5Calpha%3D%281%2B%5Cfrac%7B1%7D%7B%5Cchi%5E%7B2%7D%29
+
 $\alpha=(1+\frac{1}{\chi^{2})$
 
 where $\chi^{2}$ is taken as the sum of point-by-point differences in
