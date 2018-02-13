@@ -25,16 +25,15 @@ The test score will be determined according to the following figure-of-merit
 popular in particle physics:
 
 ![](http://latex.codecogs.com/svg.latex?%5Csigma%3D%5Calpha%5Cfrac%7BS%7D%7B%5Csqrt%7BS%2BB%7D%7D)
-$\sigma=\alpha\frac{S}{\sqrt{S+B}}$
 
 where S is the number of signal events passing the classifier in the
 training sample and B is the number of background events passing the classifier.
 
-##### The factor $\alpha$
+##### The factor ![](http://latex.codecogs.com/svg.latex?%5Calpha)
 
 *** Warning **** The bonus multiplier is not for the faint-hearted.
 
-The factor $\alpha$ is a bonus multiplier for those wishing an extra challenge.
+The factor ![](http://latex.codecogs.com/svg.latex?%5Calpha) is a bonus multiplier for those wishing an extra challenge.
 This is defined as
 
 ![](http://latex.codecogs.com/svg.latex?%5Calpha%3D%281%2B%5Cfrac%7B1%7D%7B%5Cchi%5E%7B2%7D%7D%29)
