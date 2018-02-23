@@ -92,10 +92,11 @@ In preparation for this task:
         CFLAGS="${CFLAGS} -pthread" \
           CXXFLAGS="${CXXFLAGS} -pthread" \
           LDFLAGS="${LDFLAGS} -pthread -Wl,--no-undefined" \
-          cmake -C settings.cmake ../  # example settings.cmake can be found [here](https://pastebin.com/jADQQr40)
+          cmake -C settings.cmake ../
         make -j<num_threads>
         make DESTDIR="/usr or /usr/local or /path/to local folder" install
       ```
+      example settings.cmake can be found [here](https://pastebin.com/jADQQr40)
   * Clone [RapidSim](https://github.com/gcowan/RapidSim) project
   * Follow the instructions and build the `RapidSim` project
 
