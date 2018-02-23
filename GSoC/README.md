@@ -7,6 +7,8 @@ the *Extension and characterisation of the LHCb data isolation drone neural netw
 included in the Google Summer of Code (GSoC) program and offered by members of the LHCb Collaborations at CERN.
 The detailed description of the project can be found [here](http://hepsoftwarefoundation.org/gsoc/2018/proposal_LHCbHEPDrone.html).
 
+For any questions, please don't hesitate to contact us: s.benson@cerm.ch, k.gizdov@cern.ch
+
 ## Exercise for Candidate Students
 
 In order to demonstrate some of the required skills for the project,
@@ -96,7 +98,7 @@ In preparation for this task:
         make -j<num_threads>
         make DESTDIR="/usr or /usr/local or /path/to local folder" install
       ```
-      example settings.cmake can be found [here](https://pastebin.com/jADQQr40)
+      example `settings.cmake` can be found [here](https://pastebin.com/jADQQr40)
   * Clone [RapidSim](https://github.com/gcowan/RapidSim) project
   * Follow the instructions and build the `RapidSim` project
 
