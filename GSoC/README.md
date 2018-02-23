@@ -7,7 +7,7 @@ the *Extension and characterisation of the LHCb data isolation drone neural netw
 included in the Google Summer of Code (GSoC) program and offered by members of the LHCb Collaborations at CERN.
 The detailed description of the project can be found [here](http://hepsoftwarefoundation.org/gsoc/2018/proposal_LHCbHEPDrone.html).
 
-For any questions, please don't hesitate to contact us: s.benson@cerm.ch, k.gizdov@cern.ch
+For any questions, please don't hesitate to contact us: sean.benson@cerm.ch, k.gizdov@cern.ch
 
 ## Exercise for Candidate Students
 
@@ -129,4 +129,4 @@ This folder should contain a pickle file of the created SciKit-Learn classifier.
 If the bonus multiplier is attempted, a drone network in JSON
 format should also be included in the folder.
 
-Once you complete any of the tasks of this exercise, please send us by e-mail the requested deliverables and the answers to the proposed questions at: s.benson@cern.ch, k.gizdov@cern.ch
+Once you complete any of the tasks of this exercise, please send us by e-mail the requested deliverables and the answers to the proposed questions at: sean.benson@cern.ch, k.gizdov@cern.ch
