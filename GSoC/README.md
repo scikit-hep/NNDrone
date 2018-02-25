@@ -33,7 +33,7 @@ In preparation for this task:
   * Install `python2`
   * Install project requirements - `numpy`, `sklearn`, `scipy`, `matplotlib`
   * Clone this repository to your local machine
-  * Set up the environment by running: `cd /path/to/HEPDrone/; ./setup.sh`
+  * Set up the environment by running: `cd /path/to/HEPDrone/; . ./setup.sh`
 
 Once you have set up your environment with all the software listed above,
 you should be able to run `cd /path/to/HEPDrone/GSoC; ./test_model.py <YOUR SURNAME>`.
