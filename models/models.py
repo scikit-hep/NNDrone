@@ -184,9 +184,41 @@ class BaseModel:
 
     def save_model(self, output_name):
         f_out = open(output_name, 'wb')
-        pickle.dump(self._layers, f_out)
+        pickle.dump(self, f_out)
         f_out.close()
 
     def load_model(self, input_name):
-        f_in = open(input_name, 'rb')
-        self._layers = pickle.load(f_in)
+        _model = pickle.load(open(input_name, 'rb'))
+        self._n_features = _model._n_features
+        self._n_outputs = _model._n_outputs
+        self._layers = _model._layers
+
+
+    def __eq__(self, other):
+        """are models the same"""
+        if self._n_features != other._n_features:
+            print("Number of input features differ")
+            return False
+
+        if self._n_outputs != other._n_outputs:
+            print("Number of outputs differ")
+            return False
+
+        if len(self._layers) != len(other._layers):
+            print("Layer number differs")
+            return False
+
+        for i in range(len(self._layers)):
+            if not np.array_equal(np.asarray(self._layers[i]['bias'], dtype = float), np.asarray(other._layers[i]['bias'], dtype = float)):
+                print("Bias layers differ")
+                return False
+            if not np.array_equal(np.asarray(self._layers[i]['weight'], dtype = float), np.asarray(other._layers[i]['weight'], dtype = float)):
+                print("Weight layers differ")
+                return False
+
+        return True
+
+
+    def __ne__(self, other):
+        """are models different"""
+        return not (self == other)

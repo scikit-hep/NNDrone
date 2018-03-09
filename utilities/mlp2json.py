@@ -93,7 +93,7 @@ class MLP2JSON(object):
 
         # activation conversion dictionary
         self.activation_dict_ = {
-                                 'identity' : 'linear'
+                                 'identity' : 'none'
                                 ,'logistic' : 'sigmoid'
                                 ,'tanh'     : 'tanh'
                                 ,'relu'     : 'rectified'
