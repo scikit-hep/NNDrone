@@ -1,0 +1,2 @@
+The pkl file gives the classifier trained with the two-feature combination that gave the best results, which is 3-4. Here the features are numbered from 0 to 5, in order, of a single input vector of data (both signal and background).
+The ROC intgral comparison with other combinations are shown in the pdf file.
