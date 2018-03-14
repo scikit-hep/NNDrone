@@ -11,10 +11,19 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 import math
 import pickle
-from utilities.plotting import hd_hist, scatter
 import matplotlib.pyplot as plt
-from utilities.utilities import next_batch
-from models.models import BaseModel as Model
+try:
+    from plotting import hd_hist, scatter
+except ImportError:
+    from utilities.plotting import hd_hist, scatter
+try:
+    from utilities import next_batch
+except ImportError:
+    from utilities.utilities import next_batch
+try:
+    from models import BaseModel as Model
+except ImportError:
+    from models.models import BaseModel as Model
 
 # DATASET LOADING ***************************************************************
 totalDataSig = []

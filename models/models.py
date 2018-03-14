@@ -1,4 +1,7 @@
-from utilities.utilities import sigmoid_activation, sigmoid_prime, cost_derivative, inv_sigmoid_activation
+try:
+    from utilities import sigmoid_activation, sigmoid_prime, cost_derivative, inv_sigmoid_activation
+except ImportError:
+    from utilities.utilities import sigmoid_activation, sigmoid_prime, cost_derivative, inv_sigmoid_activation
 import pickle
 import numpy as np
 

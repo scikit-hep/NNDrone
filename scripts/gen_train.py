@@ -1,6 +1,9 @@
 #!/usr/bin/env python2
 
-from utilities.root_funcs import to_4vector, to_4vector_tree, open_root
+try:
+    from root_funcs import to_4vector, to_4vector_tree, open_root
+except ImportError:
+    from utilities.root_funcs import to_4vector, to_4vector_tree, open_root
 from sklearn.externals import joblib
 
 files = {'signal': ["../data/RapidSimGen/Bs2Jpsiphi_tree.root", "DecayTree"]

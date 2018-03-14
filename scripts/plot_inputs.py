@@ -1,4 +1,7 @@
-from utilities.plotting import hd_hist
+try:
+    from plotting import hd_hist
+except ImportError:
+    from utilities.plotting import hd_hist
 from sklearn.externals import joblib
 import numpy as np
 

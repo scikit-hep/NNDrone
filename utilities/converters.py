@@ -1,7 +1,11 @@
 import numpy as np
 import pickle
 import math
-from utilities.utilities import dot_loss, next_batch
+
+try:
+    from utilities import dot_loss, next_batch
+except ImportError:
+    from utilities.utilities import dot_loss, next_batch
 
 
 class BasicConverter:
