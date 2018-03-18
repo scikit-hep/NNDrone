@@ -7,7 +7,7 @@ the *Extension and characterisation of the LHCb data isolation drone neural netw
 included in the Google Summer of Code (GSoC) program and offered by members of the LHCb Collaborations at CERN.
 The detailed description of the project can be found [here](http://hepsoftwarefoundation.org/gsoc/2018/proposal_LHCbHEPDrone.html).
 
-For any questions, please don't hesitate to contact us: sean.benson@cerm.ch, k.gizdov@cern.ch
+For any questions, please don't hesitate to contact us: sean.benson@cern.ch, k.gizdov@cern.ch
 
 ## Exercise for Candidate Students
 
