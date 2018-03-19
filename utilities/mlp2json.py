@@ -55,7 +55,7 @@ import sys
 import json
 import numpy as np
 from argparse import ArgumentParser
-from sklearn import svm, metrics, preprocessing
+from sklearn import __version__, svm, metrics, preprocessing
 from sklearn.externals import joblib
 
 
@@ -294,13 +294,16 @@ if __name__ == '__main__':
                         help = '*.pkl file containing saved Scikit-Learn MLP.')
     parser.add_argument('-o', '--output', action = 'store', default = 'mlp-keras.json', dest = 'output',
                         help = 'Output file to save the Keras JSON formatted MLP.')
-    parser.add_argument('-s', '--scaler', action = 'store', dest = 'scaler',
-                        help = '*.pkl file containing saved Scikit-Learn StandardScaler to scale inputs.')
-    parser.add_argument('-j', '--save-json', action = 'store', dest = 'save_json',
+    parser.add_argument('-j', '--save-vars-json', action = 'store', dest = 'save_vars_json',
                         help = 'File to save the new Variable Specification if needed')
+
+    # define variable specification parser
     parser_spec.add_argument('var_spec', metavar = 'spec', action = 'store', default = 'mlp_var_spec.json',
                              help = 'Variable Specification JSON file as per lwtnn docs.')
+    parser_spec.add_argument('-s', '--scaler', action = 'store', dest = 'scaler',
+                             help = '*.pkl file containing saved Scikit-Learn StandardScaler to scale inputs.')
 
+    # define variable list parser
     parser_list.add_argument('var_list', metavar = 'list', action = 'store', default = 'mlp_var_names.txt',
                              help = 'Text file with input variable names.')
     parser_list.add_argument('scaler', metavar = 'scaler', action = 'store',
@@ -316,16 +319,16 @@ if __name__ == '__main__':
     conv.output_file_     = args.output
     conv.scaler_pkl_file_ = args.scaler
     conv.scale_vars_      = True if conv.scaler_pkl_file_ is not None else False
-    conv.save_vars_json_  = True if args.save_json is not None or args.subcommand == 'list' else False
+    conv.save_vars_json_  = True if args.save_vars_json is not None or args.subcommand == 'list' else False
 
     if args.subcommand == 'list':
         conv.file_with_vars_  = args.var_list
         conv.class_labels_    = args.class_label
-        conv.var_json_file_ = args.save_json if args.save_json is not None else str(conv.file_with_vars_).split('.')[0] + '_gen.json'
-        conv.misc_          = {"scikit-learn": "0.19.1"}
+        conv.var_json_file_ = args.save_vars_json if args.save_vars_json is not None else str(conv.file_with_vars_).split('.')[0] + '_gen.json'
+        conv.misc_          = {"scikit-learn": ("{}").format(__version__)}
     elif args.subcommand == 'spec':
         conv.var_spec_file_   = args.var_spec
-        conv.var_json_file_ = args.save_json if args.save_json is not None else str(conv.var_spec_file_).split('.')[0] + '_gen.json'
+        conv.var_json_file_ = args.save_vars_json if args.save_json is not None else str(conv.var_spec_file_).split('.')[0] + '_gen.json'
 
     # Run it
     conv.run()
