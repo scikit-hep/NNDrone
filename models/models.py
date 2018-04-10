@@ -22,25 +22,25 @@ class BaseModel:
         layer = dict()
         layer['weight'] = np.matrix(np.random.random((outsize if outsize > 1 else 1, insize)))
         layer['bias'] = np.matrix(np.random.random((outsize if outsize > 1 else 1, 1)))
-        print 'BaseModel: Adding layer...'
-        print 'BaseModel: Adding weights matrix: (%s,%s)' % (layer['weight'].shape[0], layer['weight'].shape[1])
-        print 'BaseModel: Adding bias vector: (%s,%s)' % (layer['bias'].shape[0], layer['bias'].shape[1])
+        print('BaseModel: Adding layer...')
+        print('BaseModel: Adding weights matrix: (%s,%s)' % (layer['weight'].shape[0], layer['weight'].shape[1]))
+        print('BaseModel: Adding bias vector: (%s,%s)' % (layer['bias'].shape[0], layer['bias'].shape[1]))
 
         self._layers.append(layer)
 
     def eval_layer(self, act, lay, debug=False):
         layer = self._layers[lay]
         if debug:
-            print 'Evaluating activation: (%s,%s)' % (act.shape[0], act.shape[1])
-            print 'Input act:'
-            print act
-            print 'Input weight'
-            print layer['weight']
+            print('Evaluating activation: (%s,%s)' % (act.shape[0], act.shape[1]))
+            print('Input act:')
+            print(act)
+            print('Input weight')
+            print(layer['weight'])
         # act = sigmoid_activation(np.dot(layer['weight'], act) + layer['bias'])
         act = np.dot(layer['weight'], act) + layer['bias']
         if debug:
-            print 'Output act:'
-            print act
+            print('Output act:')
+            print(act)
         return act
 
     def evaluate_total(self, in_data, debug=False):
@@ -49,24 +49,24 @@ class BaseModel:
         else:
             in_mat = np.array([[d] for d in in_data])
         if debug:
-            print 'Evaluating data: (%s,%s)' % (in_mat.shape[0], in_mat.shape[1])
+            print('Evaluating data: (%s,%s)' % (in_mat.shape[0], in_mat.shape[1]))
 
         for c, layer in enumerate(self._layers):
             in_mat = sigmoid_activation(self.eval_layer(in_mat, c, debug))
             if c == len(self._layers)-2:
                 self._initialiser = in_mat
             if debug:
-                print 'Evaluated layer: %s' % (c+1)
-                print 'Output shape: (%s,%s)' % (in_mat.shape[0], in_mat.shape[1])
-                print 'Output:'
-                print in_mat
+                print('Evaluated layer: %s' % (c+1))
+                print('Output shape: (%s,%s)' % (in_mat.shape[0], in_mat.shape[1]))
+                print('Output:')
+                print(in_mat)
         return in_mat
 
     def print_layers(self):
         for c, layer in enumerate(self._layers):
-            print 'Layer %s' % (c+1)
-            print 'Weights matrix shape: (%s,%s)' % (layer['weight'].shape[0], layer['weight'].shape[1])
-            print 'Bias vector shape (%s,%s)' % (layer['bias'].shape[0], layer['bias'].shape[1])
+            print('Layer %s' % (c+1))
+            print('Weights matrix shape: (%s,%s)' % (layer['weight'].shape[0], layer['weight'].shape[1]))
+            print('Bias vector shape (%s,%s)' % (layer['bias'].shape[0], layer['bias'].shape[1]))
 
     def backprop(self, x, y):
         nabla_b = []
@@ -89,24 +89,24 @@ class BaseModel:
             #
             a = sigmoid_activation(z)
             acts.append(a)
-            # print 'shape z: (%s,%s)' % (z.shape[0],z.shape[1])
-            # print 'shape a: (%s,%s)' % (a.shape[0],a.shape[1])
+            # print('shape z: (%s,%s)' % (z.shape[0],z.shape[1]))
+            # print('shape a: (%s,%s)' % (a.shape[0],a.shape[1]))
 
-        # print 'shape cost_deriv: (%s,%s)' % (cost_derivative(acts[-1], y).shape[0],cost_derivative(acts[-1], y).shape[1])
+        # print('shape cost_deriv: (%s,%s)' % (cost_derivative(acts[-1], y).shape[0],cost_derivative(acts[-1], y).shape[1]))
         delta = np.multiply(cost_derivative(acts[-1], y).T, sigmoid_prime(zs[-1]))
         nabla_b[-1] = delta
         nabla_w[-1] = np.dot(delta, acts[-2].T)
 
         for la in range(2, len(self._layers)+1):
-            # print 'Processing l=%s:' % l
+            # print('Processing l=%s:' % l)
 
             z = zs[-la]
             sp = sigmoid_prime(z)
 
-            # print 'shape sp: (%s,%s)' % (sp.shape[0],sp.shape[1])
-            # print 'shape z: (%s,%s)' % (z.shape[0],z.shape[1])
-            # print 'shape delta: (%s,%s)' % (delta.shape[0],delta.shape[1])
-            # print 'layer shape: (%s,%s)' % (self._layers[-l+1]['weight'].shape[0], self._layers[-l+1]['weight'].shape[1])
+            # print('shape sp: (%s,%s)' % (sp.shape[0],sp.shape[1]))
+            # print('shape z: (%s,%s)' % (z.shape[0],z.shape[1]))
+            # print('shape delta: (%s,%s)' % (delta.shape[0],delta.shape[1]))
+            # print('layer shape: (%s,%s)' % (self._layers[-l+1]['weight'].shape[0], self._layers[-l+1]['weight'].shape[1]))
 
             # special case if delta is a scalar
             if delta.shape == (1, 1):
@@ -114,7 +114,7 @@ class BaseModel:
             else:
                 delta = np.multiply(np.dot(self._layers[-la+1]['weight'].T, delta), sp)
 
-            # print 'new shape delta: (%s,%s)' % (delta.shape[0],delta.shape[1])
+            # print('new shape delta: (%s,%s)' % (delta.shape[0],delta.shape[1]))
 
             nabla_b[-la] = delta
             # special case if delta is a scalar
@@ -124,10 +124,10 @@ class BaseModel:
                 nabla_w[-la] = np.dot(delta, acts[-la-1].T)
 
         # for w, b in zip(nabla_w, nabla_b):
-        #    print 'Weights nabla: (%s,%s)' % (w.shape[0],w.shape[1])
-        #     print 'bias nabla: (%s,%s)' % (b.shape[0],b.shape[1])
-        # print nabla_b
-        # print nabla_w
+        #    print('Weights nabla: (%s,%s)' % (w.shape[0],w.shape[1]))
+        #     print('bias nabla: (%s,%s)' % (b.shape[0],b.shape[1]))
+        # print(nabla_b)
+        # print(nabla_w)
         # import sys
         # sys.exit(0)
 
@@ -164,9 +164,9 @@ class BaseModel:
                 layer['weight'][n][n] = 1.0
         layer['bias'] = np.zeros((sq_size, 1), dtype=float)
 
-        print 'BaseModel: Requested model change...'
-        print 'BaseModel: Adding weights matrix: (%s,%s)' % (layer['weight'].shape[0], layer['weight'].shape[1])
-        print 'BaseModel: Adding bias vector: (%s,%s)' % (layer['bias'].shape[0], layer['bias'].shape[1])
+        print('BaseModel: Requested model change...')
+        print('BaseModel: Adding weights matrix: (%s,%s)' % (layer['weight'].shape[0], layer['weight'].shape[1]))
+        print('BaseModel: Adding bias vector: (%s,%s)' % (layer['bias'].shape[0], layer['bias'].shape[1]))
 
         self._layers.insert(len(self._layers)-1, layer)
 
@@ -177,13 +177,13 @@ class BaseModel:
         # in consecutive layers
 
         _layer = self._layers[layer]
-        _layer_p1 = self._layers[layer+1]
+        _layer_p1 = self._layers[layer + 1]
         # m in n out
         # layer -> m in, n+1 out
         # layer+1 -> m+1 in, n out
-        np.pad(_layer['weight'], [(0, 0), (0, 1)], mode='constant', constant_values=0)
-        np.pad(_layer['bias'], [(0, 0), (0, 1)], mode='constant', constant_values=0)
-        np.pad(_layer_p1['weight'], [(0, 1), (0, 0)], mode='constant', constant_values=0)
+        self._layers[layer]['weight']     = np.pad(_layer['weight'], [(0, 1), (0, 0)], mode='constant', constant_values=0)
+        self._layers[layer]['bias']       = np.pad(_layer['bias'], [(0, 1), (0, 0)], mode='constant', constant_values=0)
+        self._layers[layer + 1]['weight'] = np.pad(_layer_p1['weight'], [(0, 0), (0, 1)], mode='constant', constant_values=0)
 
     def save_model(self, output_name):
         f_out = open(output_name, 'wb')

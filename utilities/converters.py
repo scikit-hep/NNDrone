@@ -36,14 +36,18 @@ class BasicConverter:
         pickle.dump(training_data, f_train)
         f_train.close()
 
-    def convert_model(self, in_model, base_model, datapoints, scaler=None):
+    def convert_model(self, in_model, base_model, datapoints, scaler=None, keras_conv=False):
         # Create the list of outputs for the base model
         refs = []
         flattened = []
         for b in datapoints:
             if scaler:
                 b = scaler.transform([b])
-            prob = base_model.predict_proba(b)[0][0]
+            prob = 0.0
+            if keras_conv:
+                prob = base_model.predict_proba(np.expand_dims(np.expand_dims(b, axis = 2), axis = 0))[0][0]
+            else:
+                prob = base_model.predict_proba(b)[0][0]
             b = b[0].flatten().tolist()
             refs.append(prob)
             flattened.append(b)
@@ -54,7 +58,7 @@ class BasicConverter:
             # loop over our data in batches
             for (batchX, batchY) in next_batch(datapoints, refs, self._batchSize):
                 if batchX.shape[0] != self._batchSize:
-                    print 'Batch size insufficient (%s), continuing...' % batchY.shape[0]
+                    print('Batch size insufficient (%s), continuing...' % batchY.shape[0])
                     continue
 
                 # Find current output and calculate loss for our graph
@@ -80,8 +84,8 @@ class BasicConverter:
                     modify = (avloss < (self._updatedLoss-(diff*avloss)))
                 if modify:
                     update = 1
-                    print 'Model conversion not sufficient, updating...'
-                    print 'Last updated loss: %s' % self._updatedLoss
+                    print('Model conversion not sufficient, updating...')
+                    print('Last updated loss: %s' % self._updatedLoss)
                     self._updatedLoss = avloss
                     in_model.expand_layer_dynamic(0)
                 self._updates.append(update)
@@ -90,3 +94,4 @@ class BasicConverter:
             # update our loss history list by taking the average loss
             # across all batches
             self._losses.append(avloss)
+        return in_model
