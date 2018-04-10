@@ -177,13 +177,13 @@ class BaseModel:
         # in consecutive layers
 
         _layer = self._layers[layer]
-        _layer_p1 = self._layers[layer+1]
+        _layer_p1 = self._layers[layer + 1]
         # m in n out
         # layer -> m in, n+1 out
         # layer+1 -> m+1 in, n out
-        np.pad(_layer['weight'], [(0, 0), (0, 1)], mode='constant', constant_values=0)
-        np.pad(_layer['bias'], [(0, 0), (0, 1)], mode='constant', constant_values=0)
-        np.pad(_layer_p1['weight'], [(0, 1), (0, 0)], mode='constant', constant_values=0)
+        self._layers[layer]['weight']     = np.pad(_layer['weight'], [(0, 1), (0, 0)], mode='constant', constant_values=0)
+        self._layers[layer]['bias']       = np.pad(_layer['bias'], [(0, 1), (0, 0)], mode='constant', constant_values=0)
+        self._layers[layer + 1]['weight'] = np.pad(_layer_p1['weight'], [(0, 0), (0, 1)], mode='constant', constant_values=0)
 
     def save_model(self, output_name):
         f_out = open(output_name, 'wb')
