@@ -21,6 +21,15 @@ class BasicConverter:
         self._num_epochs = 300
         self._threshold = 0.02
 
+    def losses(self):
+        return self._losses
+
+    def diffs(self):
+        return self._diffs
+
+    def updates(self):
+        return self._updates
+
     def save_history(self, fname):
         f_train = open(fname, 'wb')
         training_data = [self._losses, self._diffs, self._updates]
@@ -48,13 +57,13 @@ class BasicConverter:
                     print 'Batch size insufficient (%s), continuing...' % batchY.shape[0]
                     continue
 
-            # Find current output and calculate loss for our graph
-            preds = in_model.evaluate_total(batchX, debug=False)
-            loss, error = dot_loss(preds, batchY)
-            epochloss.append(loss)
+                # Find current output and calculate loss for our graph
+                preds = in_model.evaluate_total(batchX, debug=False)
+                loss, error = dot_loss(preds, batchY)
+                epochloss.append(loss)
 
-            # Update the model
-            in_model.update(batchX, batchY, self._alpha)
+                # Update the model
+                in_model.update(batchX, batchY, self._alpha)
 
             avloss = np.average(epochloss)
             diff = 0.0
