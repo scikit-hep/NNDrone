@@ -48,9 +48,9 @@ probabilitiesSig = []
 probabilitiesBkg = []
 
 print('Loading signal data file...')
-sig_data = joblib.load('../data/signal_data.p')
+sig_data = joblib.load('../data/signal_data_gpd.p')
 print('Loading background data file...')
-bkg_data = joblib.load('../data/background_data.p')
+bkg_data = joblib.load('../data/background_data_gpd.p')
 #
 trainFraction = 0.5
 cutIndex = int(trainFraction * len(sig_data))
@@ -114,16 +114,16 @@ if not useSaved:
 
     history = classifier.fit(np.expand_dims(setTrain, axis = 2), labels_train, batch_size = kerasBatchSize, epochs = kerasEpochNum, validation_data = (np.expand_dims(setTest, axis = 2), labels_test))
 
-    scatter(range(0, kerasEpochNum), history.history['loss'], [0, kerasEpochNum], [min(history.history['loss']), max(history.history['loss'])], 'Epoch', 'Loss', 'Training Loss', 'trainig_loss_drone.pdf')
+    scatter(range(0, kerasEpochNum), history.history['loss'], [0, kerasEpochNum], [min(history.history['loss']), max(history.history['loss'])], 'Epoch', 'Loss', 'Training Loss', 'trainig_loss_gpd.pdf')
 
-    joblib.dump(history.history, open('./keras_hist.pkl', 'wb'))
+    joblib.dump(history.history, open('./keras_hist_gpd.pkl', 'wb'))
 
     print('Saving classifier...')
-    classifier.save('./keras_locallyconnected1d_for_drone.h5')
+    classifier.save('./keras_locallyconnected1d_for_drone_gpd.h5')
 
 else:
     print('Loading classifier...')
-    classifier = load_model('./keras_locallyconnected1d_for_drone.h5')
+    classifier = load_model('./keras_locallyconnected1d_for_drone_gpd.h5')
 
 if not classifier:
     print('ERROR: Could not make or load classifier. Exiting...')
@@ -247,7 +247,7 @@ for q in range(num_epochs):
     # across all batches
     lossHistory.append(avloss)
 
-f_train = open(fname('', 'training_drone', alpha, num_epochs, threshold, 'pkl'), 'wb')
+f_train = open(fname('', 'training_gpd', alpha, num_epochs, threshold, 'pkl'), 'wb')
 training_data = [losses, diffs, updates]
 pickle.dump(training_data, f_train)
 f_train.close()
@@ -261,7 +261,7 @@ plt.xlim([2, len(lossHistory)])
 plt.ylim([0.0, lossHistory[2]])
 plt.ylabel("Loss")
 plt.yscale('log')
-plt.savefig(fname("plots_drone/", "approx_lossHistory_deep", alpha, num_epochs, threshold, ".pdf"))
+plt.savefig(fname("plots_gpd/", "approx_lossHistory_deep", alpha, num_epochs, threshold, ".pdf"))
 
 # See how the sample performs on the test
 testDataSig = []
@@ -315,6 +315,6 @@ plt.plot([0.0, 1.0], [0.0, 1.0], 'k-')
 fig.suptitle("Approximation comparison")
 plt.xlabel("Prediction")
 plt.ylabel("Truth")
-plt.savefig(fname("plots_drone/", "approx_vs_truth_deep", alpha, num_epochs, threshold, ".pdf"))
+plt.savefig(fname("plots_gpd/", "approx_vs_truth_deep", alpha, num_epochs, threshold, ".pdf"))
 
-model.save_model(fname('', 'approx_drone', alpha, num_epochs, threshold, '.pkl'))
+model.save_model(fname('', 'approx_gpd', alpha, num_epochs, threshold, '.pkl'))
