@@ -9,7 +9,8 @@ def hd_hist(data, name, x_range, y_range, xname, yname, bins, labels):
         plt.hist(d
                  , bins=bins
                  , color=colours_list[c]
-                 , label=labels[c])
+                 , label=labels[c]
+                 , alpha=0.5)
 
     plt.xlim(x_range)
     plt.ylim(y_range)
