@@ -104,6 +104,9 @@ histBgTrain.SetMarkerStyle(4)
 histBgTest.SetMarkerStyle(4)
 
 histSigTrain.GetYaxis().SetRangeUser(0.0, 5500.0)
+histSigTrain.GetXaxis().SetTitle("Classifier output probability")
+histSigTrain.GetYaxis().SetTitle("Events")
+histSigTrain.GetYaxis().SetTitleOffset(1.18)
 histSigTrain.Draw("E")
 histSigTest.Draw("E SAME")
 histBgTrain.Draw("E SAME")
@@ -173,4 +176,5 @@ FoMGraph.Draw()
 canvas3.SaveAs("plots/FoM.pdf")
 
 joblib.dump(classifier, 'classifier_rapidsim.pkl')
+joblib.dump(scaler, 'scaler_rapidsim.pkl')
 print 'Classifier saved to file'
