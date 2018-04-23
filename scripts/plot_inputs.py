@@ -46,10 +46,10 @@ hd_hist([sig_minETA, bkg_minETA], 'plots/mineta_comp.pdf'
 
 hd_hist([sig_maxPT, bkg_maxPT], 'plots/maxpt_comp.pdf'
         , [0.0, 10.0], [0.0, 2500.0]
-        , "min. $p_{T}$ GeV", "Events", ptbins
+        , "max. $p_{T}$ GeV", "Events", ptbins
         , ['signal', 'background'])
 
 hd_hist([sig_maxETA, bkg_maxETA], 'plots/maxeta_comp.pdf'
         , [1.0, 6.0], [0.0, 400.0]
-        , "min. $\eta$", "Events", etabins
+        , "max. $\eta$", "Events", etabins
         , ['signal', 'background'])
