@@ -39,3 +39,15 @@ def softmax(x):
 def next_batch(x, y, batchsize):
     for i in np.arange(0, x.shape[0], batchsize):
         yield (x[i:i + batchsize], y[i:i + batchsize])
+
+
+# Stats for signal and background for a given cut
+def scanPoint(cutVal, sig, bkg):
+    totSig = len(sig)
+    totBKG = len(bkg)
+    sig_pass = [v for v in sig if v > cutVal]
+    bkg_rej = [v for v in bkg if v < cutVal]
+    bkg_pass = [v for v in bkg if v > cutVal]
+    eff_sig = float(len(sig_pass))/float(totSig)
+    rej_bkg = float(len(bkg_rej))/float(totBKG)
+    return eff_sig, rej_bkg, len(sig_pass), len(bkg_pass)
