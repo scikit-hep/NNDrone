@@ -29,10 +29,10 @@ except ImportError:
 totalDataSig = []
 probabilitiesSig = []
 
-print 'Loading classifier...'
+print ('Loading classifier...')
 classifier = joblib.load("../skLearn-classifiers/classifier_rapidsim.pkl")
 
-print 'Loading signal data file...'
+print ('Loading signal data file...')
 sig_data = joblib.load('../data/signal_data.p')
 bkg_data = joblib.load('../data/background_data.p')
 #
@@ -88,7 +88,7 @@ comp_preds = []
 comp_true = []
 for (batchX, batchY) in next_batch(test, probs_test, batchSize):
     if batchY.shape[0] < batchSize:
-        print 'Batch size insufficient (%s), continuing...' % batchY.shape[0]
+        print ('Batch size insufficient (%s), continuing...' % batchY.shape[0])
         continue
 
     output = model.evaluate_total(batchX, debug=False)
@@ -101,7 +101,7 @@ comp_preds_bkg = []
 comp_true_bkg = []
 for (batchX, batchY) in next_batch(test_bkg, probs_test_bkg, batchSize):
     if batchY.shape[0] < batchSize:
-        print 'Batch size insufficient (%s), continuing...' % batchY.shape[0]
+        print ('Batch size insufficient (%s), continuing...' % batchY.shape[0])
         continue
 
     output = model.evaluate_total(batchX, debug=False)
@@ -117,8 +117,6 @@ comp_preds = [d.item(0) for d in comp_preds]
 difflist = [(p-t) for p, t in zip(comp_preds, comp_true) if (math.fabs(p-t) < 0.0001)]
 comp_preds_bkg = [d.item(0) for d in comp_preds_bkg]
 difflist_bkg = [(p-t) for p, t in zip(comp_preds_bkg, comp_true_bkg) if (math.fabs(p-t) < 0.0001)]
-print len(difflist)
-print len(difflist_bkg)
 
 hd_hist([difflist, difflist_bkg], 'plots/approx_vs_truth_diff.pdf'
         , [-0.00005, 0.00005], [0.0, 1100.0]
@@ -144,7 +142,7 @@ plt.plot(count, training[1], '-')
 # Add markers where an update occurs
 markers_x = [c for c, a in zip(count, training[2]) if a == 1]
 markers_y = [d for d, a in zip(training[1], training[2]) if a == 1]
-print 'Number of model additions: %s' % len(markers_x)
+print('Number of model additions: %s' % len(markers_x))
 plt.plot(markers_x, markers_y, 'g^')
 fig.suptitle("")
 plt.xlabel("Epoch")
