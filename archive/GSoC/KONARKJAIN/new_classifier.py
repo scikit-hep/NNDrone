@@ -58,9 +58,17 @@ class Network:
             self.BackwardPass(Input, Desired)
         #print(fx.shape)
         return [fx, w]
+    def evaluate(self, data):  # BP with SGD (Stocastic BP)
+
+        size = data.shape[0]
+        #Input = np.zeros((1, self.Top[0]))  # temp hold input
+        for pat in range(0, size):
+            #Input[:] = data[pat, 0:self.Top[0]]
+            self.ForwardPass(data)
+        return self.out
 #DATA LOADING
-sig_data = joblib.load('signal_data.p') 
-bkg_data = joblib.load('background_data.p')
+sig_data = joblib.load('/Users/sbenson/Documents/sandbox_mac/HEPDrone/data/signal_data.p')
+bkg_data = joblib.load('/Users/sbenson/Documents/sandbox_mac/HEPDrone/data/background_data.p')
 sig_X=np.asarray(sig_data)
 bkg_X=np.asarray(bkg_data)
 sig_Y=np.ones((sig_X.shape[0],1))
@@ -87,21 +95,22 @@ labelTest = label[cutIndex:]
 topology = [2,10,1]
 net = Network(topology,np.hstack([dataTrain,labelTrain]),np.hstack([dataTest,labelTest]))
 loss = []
-for epoch in range(5000):
+for epoch in range(100):
     [fx, w] = net.evaluate_proposal(net.TrainData)
     diff = fx - labelTrain
     #print fx.shape
     loss = np.append(loss,diff.T.dot(diff))
     if epoch%200 == 0:
         print("Cost after epoch {} {}".format(epoch,loss[epoch]))
-        
+
+'''       
 fig = plt.figure()
 plt.plot(range(5000),loss)
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.savefig("loss.png")
 plt.clf()
-
+'''
 train_accuracy = 1 - (np.sum(np.absolute(diff))/data.shape[0])
 print "Train accuracy={}".format(train_accuracy)
 
@@ -110,5 +119,29 @@ diff = fx - labelTest
 test_accuracy = 1 - (np.sum(np.absolute(diff))/data.shape[0])
 print "Test accuracy={}".format(test_accuracy) 
 
-    
-
+gsoc_sig_tot = joblib.load('/Users/sbenson/Documents/sandbox_mac/HEPDrone/GSoCeval/signal_data_gsoc.p')
+gsoc_bkg_tot = joblib.load('/Users/sbenson/Documents/sandbox_mac/HEPDrone/GSoCeval/background_data_gsoc.p')
+gsoc_sig = []
+gsoc_bkg = []
+for d in gsoc_sig_tot:
+    gsoc_sig.append(np.take(d, [0, 2]))
+for d in gsoc_bkg_tot:
+    gsoc_bkg.append(np.take(d, [0, 2]))
+gsoc_sig = gsoc_sig[:500]
+gsoc_bkg = gsoc_bkg[:500]
+gsoc_sig = np.asarray(gsoc_sig)
+gsoc_bkg = np.asarray(gsoc_bkg)
+sig_Y=np.ones((gsoc_sig.shape[0],1))
+bkg_Y=np.zeros((gsoc_bkg.shape[0],1))
+output_sig = net.evaluate(gsoc_sig)
+output_bkg = net.evaluate(gsoc_bkg)
+nsig = 0
+nbkg =0
+for o in output_sig:
+    if o>0.5:
+        nsig+=1
+for o in output_bkg:
+    if o>0.5:
+        nbkg+=1
+fom = float(nsig)/math.sqrt(float(nsig)+float(nbkg))
+print fom
