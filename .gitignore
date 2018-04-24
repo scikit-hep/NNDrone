@@ -2,3 +2,4 @@
 *.xml
 *DS_Store
 *.iml
+*.so
