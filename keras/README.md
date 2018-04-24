@@ -1,6 +1,6 @@
 ### Folder structure
 
-The skLearn folder holds ML classifiers trained with the Keras
+The keras folder holds ML classifiers trained with the Keras
 package along with associated drones.
 
 The format for contributions is intended to be as follows:
