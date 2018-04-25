@@ -6,12 +6,12 @@ import pickle
 import numpy as np
 
 
-class BaseModel:
-    def __init__(self, n_features, n_outputs):
+class BaseModel(object):
+    def __init__(self, n_features, n_outputs, layers = [], initialiser = None):
         self._n_features = n_features
         self._n_outputs = n_outputs
-        self._layers = []
-        self._initialiser = None
+        self._layers = layers
+        self._initialiser = initialiser
 
     def add_layer(self, outsize):
         # find last layer size

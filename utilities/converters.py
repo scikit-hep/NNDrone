@@ -8,18 +8,19 @@ except ImportError:
     from utilities.utilities import dot_loss, next_batch
 
 
-class BasicConverter:
-    def __init__(self):
+class BasicConverter(object):
+    def __init__(self, alpha = 0.05, batch_size = 1, num_epochs = 300, threshold = 0.02, add_layer_dynamic = False):
+        # training control
+        self._alpha = alpha
+        self._batchSize = batch_size
+        self._num_epochs = num_epochs
+        self._threshold = threshold
+        self._add_layer_dynamic = add_layer_dynamic
         # training history
         self._updatedLoss = 1000.0
         self._diffs = []
         self._losses = []
         self._updates = []
-        # training control
-        self._alpha = 0.05
-        self._batchSize = 1
-        self._num_epochs = 300
-        self._threshold = 0.02
 
     def losses(self):
         return self._losses
@@ -87,7 +88,10 @@ class BasicConverter:
                     print('Model conversion not sufficient, updating...')
                     print('Last updated loss: %s' % self._updatedLoss)
                     self._updatedLoss = avloss
-                    in_model.expand_layer_dynamic(0)
+                    if self._add_layer_dynamic:
+                        in_model.add_layer_dynamic(0)
+                    else:
+                        in_model.expand_layer_dynamic(0)
                 self._updates.append(update)
 
             print('Epoch: %s, loss %s, diff %.5f, last updated loss %.5f' % (q, avloss, diff, self._updatedLoss))

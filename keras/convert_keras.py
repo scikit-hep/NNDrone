@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from argparse import ArgumentParser
 from sklearn.externals import joblib
 from sklearn.preprocessing import StandardScaler
 import numpy as np
@@ -31,6 +32,15 @@ try:
 except ImportError:
     from utilities.converters import BasicConverter
 
+# Parse arguments
+parser = ArgumentParser(description = "Convert Keras model to a drone")
+subparsers  = parser.add_subparsers(description = 'Choose between providing a saved Keras model or generating a new one.', dest = 'subcommand')
+subparsers.required = True
+parser_saved = subparsers.add_parser('saved')
+parser_new   = subparsers.add_parser('new')
+parser_saved.add_argument('keras_file', metavar = 'keras', action = 'store', default = 'keras_model.h5',
+                          help = 'File location for saved Keras model (H5 format).')
+args = parser.parse_args()
 
 # define constants
 epochNum = 300
@@ -64,18 +74,18 @@ labels = np.ones(len(setTrain))
 for i in range(cutIndex, len(setTrain)):
     labels[i] = 0.0  # conv nets don't like -1
 
-useSaved = True
+useSaved = True if args.subcommand == 'saved' else False
 model = None
 if useSaved:
     # load Keras model
-    model = load_model('./keras_locallyconnected1d_for_drone.h5')
+    model = load_model(str(args.keras_file))
 else:
     ## Make Keras model
     model = Sequential()
     ## 6 inputs mean either 20 combinations of 3 classes
-    model.add(LocallyConnected1D(filters = 20, kernel_size = 3, activation = 'sigmoid', input_shape = (6, 1)))
+    model.add(LocallyConnected1D(filters = 20, kernel_size = 3, activation = 'sigmoid', input_shape = (len(sig_data[0]), 1)))
     # ## or 720 combinations of 2 classes
-    # model.add(LocallyConnected1D(filters = 720, kernel_size = 2, input_shape = (6, 1)))
+    # model.add(LocallyConnected1D(filters = 720, kernel_size = 2, input_shape = (len(sig_data[0]), 1)))
 
     # reduce spacial size of convolutional output
     # by non-linear downsampling to plug into
@@ -112,11 +122,11 @@ for point in all_data:
     refs.append(prob)
     flattened.append(point)
 refs = np.asarray(refs)
-labels_ref = np.concatenate((np.ones(10000), np.zeros(10000)))
+labels_ref = np.concatenate((np.ones(len(sig_data)), np.zeros(len(bkg_data))))
 flattened = np.asarray(flattened)
 
 # create drone
-drone = BaseModel(6, 1)
+drone = BaseModel(len(sig_data[0]), 1)
 drone.add_layer(5)
 drone.add_layer(1)
 
@@ -134,7 +144,7 @@ for point in all_data:
     refs_drone.append(prob)
     flattened_drone.append(point)
 refs_drone = np.asarray(refs_drone)
-labels_drone = np.concatenate((np.ones(10000), np.zeros(10000)))
+labels_drone = np.concatenate((np.ones(len(sig_data)), np.zeros(len(bkg_data))))
 flattened_drone = np.asarray(flattened_drone)
 
 joblib.dump(refs, open('./response_keras.pkl', 'wb'))
