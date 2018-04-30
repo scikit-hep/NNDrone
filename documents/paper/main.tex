@@ -1,0 +1,159 @@
+\documentclass[final,5p,times,twocolumn]{elsarticle}
+%\documentclass[preprint,12pt]{elsarticle}
+
+% Variables that controls behaviour
+\usepackage{ifthen} % for conditional statements
+\newboolean{pdflatex}
+\setboolean{pdflatex}{true} % False for eps figures 
+
+\newboolean{articletitles}
+\setboolean{articletitles}{true} % False removes titles in references
+
+\newboolean{uprightparticles}
+\setboolean{uprightparticles}{false} %True for upright particle symbols
+
+\newboolean{inbibliography}
+\setboolean{inbibliography}{false} %True once you enter the bibliography
+
+\input{preamble}
+\hypersetup{
+    unicode=false,          % non-Latin characters in Acrobat’s bookmarks
+    pdftoolbar=true,        % show Acrobat’s toolbar?
+    pdfmenubar=true,        % show Acrobat’s menu?
+    pdffitwindow=false,     % window fit to page when opened
+    pdfstartview={FitH},    % fits the width of the page to the window
+    pdfauthor={Sean Benson},     % author
+    pdfcreator={Sean Benson},   % creator of the document
+    pdfnewwindow=true,      % links in new window
+    colorlinks=true,       % false: boxed links; true: colored links
+    linkcolor=blue,          % color of internal links (change box color with linkbordercolor)
+    citecolor=green,        % color of links to bibliography
+    filecolor=magenta,      % color of file links
+    urlcolor=cyan           % color of external links
+}
+
+\begin{document}
+%\twocolumn
+
+\begin{frontmatter}
+\author[nl]{Sean Benson}
+\ead{sean.benson@nikhef.nl}
+\author[uoe]{Konstantin Gizdov}
+\address[nl]{Nikhef National Institute for Subatomic Physics, Amsterdam, The Netherlands}
+\address[uoe]{School of Physics and Astronomy, University of Edinburgh, Edinburgh, United Kingdom}
+\title{HEPDrone : a toolkit for the mass application of machine learning in High Energy Physics}
+\begin{abstract}
+  \noindent
+  Machine learning has proven to be an indispensable tool in the selection of
+  interesting events in high energy physics. Such technologies will become increasingly
+  important as detector upgrades are introduced and data rates increase by orders of magnitude.
+  We propose a toolkit to enable the creation of a drone classifier from any machine learning
+  classifier, such that different classifiers may be standardised into a single form and executed
+  in parallel. We demonstrate the capability of the drone neural network 
+  to learn the required properties of the input neural network without
+  the use of any training data, only using appropriate questioning of the input neural network.
+\end{abstract}
+\end{frontmatter}
+
+\input{introduction}
+
+\input{teaching}
+
+\input{example}
+
+\input{summary}
+
+% Do not include this in analysis note and conference reports
+\input{acknowledgements}
+
+% This should be taken out in the final paper
+%\addcontentsline{toc}{section}{References}
+\setboolean{inbibliography}{true}
+\bibliographystyle{elsarticle-num}
+\bibliography{main}
+\begin{comment}
+\begin{thebibliography}{10}
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\texttt{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\expandafter\ifx\csname href\endcsname\relax
+  \def\href#1#2{#2} \def\path#1{#1}\fi
+
+\bibitem{Alves:2008zz}
+A.~A. Alves~Jr., et~al., {The \lhcb detector at the LHC}, JINST 3 (2008)
+  S08005.
+\newblock \href {http://dx.doi.org/10.1088/1748-0221/3/08/S08005}
+  {\path{doi:10.1088/1748-0221/3/08/S08005}}.
+
+\bibitem{LHCb-DP-2014-002}
+R.~Aaij, et~al., {LHCb detector performance}, Int. J. Mod. Phys. A30 (2015)
+  1530022.
+\newblock \href {http://arxiv.org/abs/1412.6352} {\path{arXiv:1412.6352}},
+  \href {http://dx.doi.org/10.1142/S0217751X15300227}
+  {\path{doi:10.1142/S0217751X15300227}}.
+
+\bibitem{Xu:2016mik}
+Z.~Xu, M.~Tobin, {Novel real-time alignment and calibration of the LHCb
+  detector in Run II}, Nucl. Instrum. Meth. A824 (2016) 70--71.
+\newblock \href {http://dx.doi.org/10.1016/j.nima.2015.11.040}
+  {\path{doi:10.1016/j.nima.2015.11.040}}.
+
+\bibitem{Aaij:2016rxn}
+R.~Aaij, et~al., {Tesla : an application for real-time data analysis in High
+  Energy Physics}, Comput. Phys. Commun. 208 (2016) 35--42.
+\newblock \href {http://arxiv.org/abs/1604.05596} {\path{arXiv:1604.05596}},
+  \href {http://dx.doi.org/10.1016/j.cpc.2016.07.022}
+  {\path{doi:10.1016/j.cpc.2016.07.022}}.
+
+\bibitem{Hocker:2007ht}
+A.~Hocker, et~al., {TMVA - Toolkit for Multivariate Data Analysis}, PoS ACAT
+  (2007) 040.
+\newblock \href {http://arxiv.org/abs/physics/0703039}
+  {\path{arXiv:physics/0703039}}.
+
+\bibitem{Feindt:2006pm}
+M.~Feindt, U.~Kerzel, {The NeuroBayes neural network package}, Nucl. Instrum.
+  Meth. A559 (2006) 190--194.
+\newblock \href {http://dx.doi.org/10.1016/j.nima.2005.11.166}
+  {\path{doi:10.1016/j.nima.2005.11.166}}.
+
+\bibitem{Pedregosa:2012toh}
+F.~Pedregosa, et~al., {Scikit-learn: Machine Learning in Python}, J. Machine
+  Learning Res. 12 (2011) 2825--2830.
+\newblock \href {http://arxiv.org/abs/1201.0490} {\path{arXiv:1201.0490}}.
+
+\bibitem{keras}
+F.~Chollet, et~al., Keras, \url{https://github.com/fchollet/keras} (2015).
+
+\bibitem{Barrand:2001ny}
+G.~Barrand, et~al., {GAUDI - A software architecture and framework for building
+  HEP data processing applications}, Comput. Phys. Commun. 140 (2001) 45--55.
+\newblock \href {http://dx.doi.org/10.1016/S0010-4655(01)00254-5}
+  {\path{doi:10.1016/S0010-4655(01)00254-5}}.
+
+\bibitem{Gligorov:2012qt}
+V.~V. Gligorov, M.~Williams, {Efficient, reliable and fast high-level
+  triggering using a bonsai boosted decision tree}, JINST 8 (2013) P02013.
+\newblock \href {http://arxiv.org/abs/1210.6861} {\path{arXiv:1210.6861}},
+  \href {http://dx.doi.org/10.1088/1748-0221/8/02/P02013}
+  {\path{doi:10.1088/1748-0221/8/02/P02013}}.
+
+\bibitem{losssurfaces}
+A.~Choromanska, M.~Henaff, M.~Mathieu, G.~B. Arous, Y.~LeCun,
+  \href{http://arxiv.org/abs/1412.0233}{The loss surface of multilayer
+  networks}, CoRR abs/1412.0233.
+\newblock \href {http://arxiv.org/abs/1412.0233} {\path{arXiv:1412.0233}}.
+\newline\urlprefix\url{http://arxiv.org/abs/1412.0233}
+
+\bibitem{rapid}
+G.~A. Cowan, D.~C. Craik, M.~D. Needham, {RapidSim: an application for the fast
+  simulation of heavy-quark hadron decays}, Comput. Phys. Commun. 214 (2017)
+  239--246.
+\newblock \href {http://arxiv.org/abs/1612.07489} {\path{arXiv:1612.07489}},
+  \href {http://dx.doi.org/10.1016/j.cpc.2017.01.029}
+  {\path{doi:10.1016/j.cpc.2017.01.029}}.
+
+\end{thebibliography}
+\end{comment}
+
+\end{document}
