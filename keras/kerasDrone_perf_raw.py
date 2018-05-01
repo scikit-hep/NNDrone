@@ -58,6 +58,10 @@ resp_true = joblib.load('./response_keras.pkl')
 labels_drone = joblib.load('./labels_drone.pkl')
 labels_true = joblib.load('./labels_keras.pkl')
 
+# MISSING SCALING STEP
+import sys
+sys.exit('PROVIDE SCALING STEP')
+
 resp_drone_sigl = [float(x) for x in resp_drone_sig]
 resp_drone_bkgl = [float(x) for x in resp_drone_bkg]
 resp_true_sigl = [float(x) for x in resp_true_sig]
