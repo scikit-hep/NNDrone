@@ -30,8 +30,8 @@ from utilities.utilities import scanPoint
 print ('Loading signal data file...')
 sig_data = joblib.load('../data/signal_data_gpd.p')
 bkg_data = joblib.load('../data/background_data_gpd.p')
-sig_test = sig_data[10000:]
-bkg_test = bkg_data[10000:]
+sig_test = sig_data[1100:2200]
+bkg_test = bkg_data[1100:2200]
 
 # LOAD MODELS
 print ('Loading signal data file...')
@@ -39,28 +39,26 @@ prefix = 'Type_GPD_Keras_Conv/'
 droneLoc = prefix+'models/approx_gpd_alpha0.05_epochs1500_thresh0.02.pkl'
 origLoc = prefix+'models/keras_locallyconnected1d.h5'
 orig_model = load_model(origLoc)
+print(len(sig_test))
 drone_model = Model(len(sig_test[0]), 1)
 drone_model.load_model(droneLoc)
+
+print ('Loading scaler...')
+scaler = joblib.load("../skLearn/Type_GPD_MLP/Models/scaler_rapidsim_gpd.pkl")
+sig_test = scaler.transform(sig_test)
+bkg_test = scaler.transform(bkg_test)
 
 # CALCULATE RESPONSES
 resp_true_sig = []
 resp_drone_sig = []
 for b in sig_test:
-    resp_true_sig.append(orig_model.predict(np.asarray(b)))
+    resp_true_sig.append(orig_model.predict(np.expand_dims(np.asarray([b]), axis=2)))
     resp_drone_sig.append(drone_model.evaluate_total(np.asarray(b)))
 resp_true_bkg = []
 resp_drone_bkg = []
 for b in bkg_test:
-    resp_true_bkg.append(orig_model.predict(np.asarray(b)))
+    resp_true_bkg.append(orig_model.predict(np.expand_dims(np.asarray([b]), axis=2)))
     resp_drone_bkg.append(drone_model.evaluate_total(np.asarray(b)))
-resp_drone = joblib.load('./response_drone.pkl')
-resp_true = joblib.load('./response_keras.pkl')
-labels_drone = joblib.load('./labels_drone.pkl')
-labels_true = joblib.load('./labels_keras.pkl')
-
-# MISSING SCALING STEP
-import sys
-sys.exit('PROVIDE SCALING STEP')
 
 resp_drone_sigl = [float(x) for x in resp_drone_sig]
 resp_drone_bkgl = [float(x) for x in resp_drone_bkg]

@@ -34,10 +34,10 @@ def fname(prefix, base, a, n, t, suff):
 totalDataSig = []
 probabilitiesSig = []
 
-print 'Loading original classifier...'
+print ('Loading original classifier...')
 classifier = joblib.load("../skLearn-classifiers/classifier_rapidsim_gpd.pkl")
 
-print 'Loading signal data file...'
+print ('Loading signal data file...')
 sig_data = joblib.load('../data/signal_data_gpd.p')
 bkg_data = joblib.load('../data/background_data_gpd.p')
 #
@@ -96,7 +96,7 @@ def predsFromModel(_modelName):
     _comp_preds = []
     for (batchX, batchY) in next_batch(test, probs_test, batchSize):
         if batchY.shape[0] < batchSize:
-            print 'Batch size insufficient (%s), continuing...' % batchY.shape[0]
+            print ('Batch size insufficient (%s), continuing...' % batchY.shape[0])
             continue
 
         output = model.evaluate_total(batchX, debug=False)
@@ -107,7 +107,7 @@ def predsFromModel(_modelName):
     _comp_preds_bkg = []
     for (batchX, batchY) in next_batch(test_bkg, probs_test_bkg, batchSize):
         if batchY.shape[0] < batchSize:
-            print 'Batch size insufficient (%s), continuing...' % batchY.shape[0]
+            print ('Batch size insufficient (%s), continuing...' % batchY.shape[0])
             continue
 
         output = model.evaluate_total(batchX, debug=False)

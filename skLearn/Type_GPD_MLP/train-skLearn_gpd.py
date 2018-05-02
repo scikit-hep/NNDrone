@@ -1,7 +1,7 @@
 from ROOT import TH1F, TCanvas, gStyle, TLegend, TGraph
 from sklearn.externals import joblib
 from array import array
-import cPickle as pickle
+import pickle
 from scipy.stats import ks_2samp
 import numpy as np
 import datetime
@@ -20,13 +20,13 @@ classifier = MLPClassifier(activation='relu', alpha=1e-05, batch_size='auto',
                            warm_start=False)
 
 
-print 'Loading signal data file...'
+print ('Loading signal data file...')
 sig_data = joblib.load('../data/signal_data_gpd.p')
-print len(sig_data)
+print (len(sig_data))
 sig_data = sig_data[:2200]
-print 'Loading background data file...'
+print ('Loading background data file...')
 bkg_data = joblib.load('../data/background_data_gpd.p')
-print len(bkg_data)
+print (len(bkg_data))
 bkg_data = bkg_data[:2200]
 #
 cutIndex = int(trainFraction * len(sig_data))
@@ -49,7 +49,7 @@ bgTrain = scaler.transform(bgTrain)
 # do the same to the test data
 bgTest = scaler.transform(bgTest)
 
-print datetime.datetime.now(), 'Learning...'
+print (datetime.datetime.now(), 'Learning...')
 train = np.append(sigTrain, bgTrain, axis=0)
 
 target = [-1] * len(sigTrain) + [1] * len(bgTrain)
@@ -74,7 +74,7 @@ for entry in sigTest:
     testSample.append(probability)
     histSigTest.Fill(probability)
 
-print "Signal", ks_2samp(trainingSample, testSample)
+print ("Signal", ks_2samp(trainingSample, testSample))
 
 trainingSample = []
 for entry in bgTrain:
@@ -88,7 +88,7 @@ for entry in bgTest:
     testSample.append(probability)
     histBgTest.Fill(probability)
 
-print "Background", ks_2samp(trainingSample, testSample)
+print ("Background", ks_2samp(trainingSample, testSample))
 
 canvas1 = TCanvas('c1', 'Signal probability', 200, 10, 700, 500)
 gStyle.SetOptStat(0)
@@ -139,7 +139,7 @@ for bgCount, sigCount, histSig, histBg, signalEfficiencyArr, backgroundRejection
 ):
     signalEfficiency = sigCount
     backgroundRejection = 0
-    for i in xrange(0, bins + 1):  # abuse the empty underflow bin to set initial conditions
+    for i in range(0, bins + 1):  # abuse the empty underflow bin to set initial conditions
         signalEfficiency -= histSig.GetBinContent(i)
         backgroundRejection += histBg.GetBinContent(i)
         signalEfficiencyArr.append(signalEfficiency / sigCount)
@@ -152,7 +152,7 @@ testROCGraph = TGraph(bins + 1, testSignalEfficiencyArr, testBackgroundRejection
 
 FoMGraph = TGraph(bins + 1, FoMProb, FoMScore)
 
-print "Current  train/test ROC integral:", trainROCGraph.Integral(), "/", testROCGraph.Integral()
+print ("Current  train/test ROC integral:", trainROCGraph.Integral(), "/", testROCGraph.Integral())
 
 pickle.dump(
     ((trainSignalEfficiencyArr, trainBackgroundRejectionArr), (testSignalEfficiencyArr, testBackgroundRejectionArr)),
@@ -181,4 +181,4 @@ canvas3.SaveAs("plots_gpd/FoM.pdf")
 
 joblib.dump(classifier, 'classifier_rapidsim_gpd.pkl')
 joblib.dump(scaler, 'scaler_rapidsim_gpd.pkl')
-print 'Classifier saved to file'
+print ('Classifier saved to file')
