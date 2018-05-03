@@ -35,6 +35,7 @@ bkg_test = bkg_data[1100:2200]
 
 # LOAD MODELS
 print ('Loading signal data file...')
+# prefix = 'Type_B_Keras_Conv/'
 prefix = 'Type_GPD_Keras_Conv/'
 droneLoc = prefix+'models/approx_gpd_alpha0.05_epochs1500_thresh0.02.pkl'
 origLoc = prefix+'models/keras_locallyconnected1d.h5'
@@ -44,7 +45,8 @@ drone_model = Model(len(sig_test[0]), 1)
 drone_model.load_model(droneLoc)
 
 print ('Loading scaler...')
-scaler = joblib.load("../skLearn/Type_GPD_MLP/Models/scaler_rapidsim_gpd.pkl")
+# scaler = joblib.load("../skLearn/Type_B_MLP/Models/scaler_rapidsim.pkl")
+scaler = joblib.load("../skLearn/Type_GPD_MLP/Models/scaler_rapidsim.pkl")
 sig_test = scaler.transform(sig_test)
 bkg_test = scaler.transform(bkg_test)
 
