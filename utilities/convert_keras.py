@@ -43,10 +43,10 @@ parser_saved.add_argument('keras_file', metavar = 'keras', action = 'store', def
 args = parser.parse_args()
 
 # define constants
-epochNum = 300
+epochNum = 1500
 batchSize = 128
 alpha = 0.05
-threshold = 0.02
+threshold = 0.01
 
 # load dataset
 sig_data = np.asarray(joblib.load('../data/signal_data.p'))
@@ -67,7 +67,7 @@ setTrain = np.asarray(np.concatenate((sig_data[cutIndex:],bkg_data[:cutIndex])))
 setTest = np.asarray(np.concatenate((sig_data[:cutIndex],bkg_data[cutIndex:])))
 
 if len(setTrain) != len(setTest):
-    print('WARNING: Training and testing sets have different sizes: (%s; %s)' % len(setTrain), len(setTest))
+    print('WARNING: Training and testing sets have different sizes: (%s; %s)' % (len(setTrain), len(setTest)))
 
 # make labels for data
 labels = np.ones(len(setTrain))
@@ -78,8 +78,10 @@ useSaved = True if args.subcommand == 'saved' else False
 model = None
 if useSaved:
     # load Keras model
+    print('Loading model')
     model = load_model(str(args.keras_file))
 else:
+    print('Training new model')
     ## Make Keras model
     model = Sequential()
     ## 6 inputs mean either 20 combinations of 3 classes
@@ -130,8 +132,9 @@ drone = BaseModel(len(sig_data[0]), 1)
 drone.add_layer(5)
 drone.add_layer(1)
 
-conv = BasicConverter()
-drone = conv.convert_model(drone, model, all_data)
+conv = BasicConverter(num_epochs = epochNum, threshold = threshold)
+drone = conv.convert_model(drone, model, all_data[:5000], keras_conv = True)
+conv.save_history('./converted_hist.pkl')
 
 drone.save_model('./converted_drone.pkl')
 

@@ -37,7 +37,7 @@ class BasicConverter(object):
         pickle.dump(training_data, f_train)
         f_train.close()
 
-    def convert_model(self, in_model, base_model, datapoints, scaler=None, keras_conv=False):
+    def convert_model(self, drone_model, base_model, datapoints, scaler = None, keras_conv = False):
         # Create the list of outputs for the base model
         refs = []
         flattened = []
@@ -52,6 +52,7 @@ class BasicConverter(object):
             b = b[0].flatten().tolist()
             refs.append(prob)
             flattened.append(b)
+        inflate = 0  # to inflate the learning without change iterations
         for q in range(self._num_epochs):
             # initialize the total loss for the epoch
             epochloss = []
@@ -63,17 +64,17 @@ class BasicConverter(object):
                     continue
 
                 # Find current output and calculate loss for our graph
-                preds = in_model.evaluate_total(batchX, debug=False)
+                preds = drone_model.evaluate_total(batchX, debug=False)
                 loss, error = dot_loss(preds, batchY)
                 epochloss.append(loss)
 
                 # Update the model
-                in_model.update(batchX, batchY, self._alpha)
+                drone_model.update(batchX, batchY, self._alpha)
 
             avloss = np.average(epochloss)
             diff = 0.0
             if q > 0:
-                # Is the fractional difference less than the threshold
+                # is the relative improvement of the loss too small, smaller than threshold
                 diff = math.fabs(avloss-self._losses[-1])/avloss
                 self._diffs.append(diff)
                 self._losses.append(avloss)
@@ -81,21 +82,33 @@ class BasicConverter(object):
                 modify = True if (diff < self._threshold) else False
                 if modify:
                     # If it is less than the threshold, is it below
-                    # where we last updated
-                    modify = (avloss < (self._updatedLoss-(diff*avloss)))
+                    # where we last updated, has the drone learned enough
+                    #
+                    # - skip checks if we have never updated before
+                    # - do at least 6 learning iterations before attempting new update
+                    # - use asymptotic exponential to push model to learn
+                    #   until its loss is far enough away from previous update,
+                    inflate += 1  # iterate inflating
+                    modify = True if self._updatedLoss == 1000.0 else (avloss < (self._updatedLoss - (50.0 * (1.0 - np.exp(-0.04 * inflate)) * diff * avloss))) and (inflate > 5)
                 if modify:
                     update = 1
+                    inflate = 0
                     print('Model conversion not sufficient, updating...')
                     print('Last updated loss: %s' % self._updatedLoss)
                     self._updatedLoss = avloss
                     if self._add_layer_dynamic:
-                        in_model.add_layer_dynamic(0)
+                        drone_model.add_layer_dynamic(0)
                     else:
-                        in_model.expand_layer_dynamic(0)
+                        drone_model.expand_layer_dynamic(0)
+                    print('Model structure is now:')
+                    drone_model.print_layers()
                 self._updates.append(update)
 
             print('Epoch: %s, loss %s, diff %.5f, last updated loss %.5f' % (q, avloss, diff, self._updatedLoss))
             # update our loss history list by taking the average loss
             # across all batches
-            self._losses.append(avloss)
-        return in_model
+            if q == 0:  # be consistent at the first epoch
+                self._losses.append(avloss)
+                self._diffs.append(math.fabs(avloss - self._updatedLoss) / avloss)
+                self._updates.append(0)
+        return drone_model
