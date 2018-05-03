@@ -35,6 +35,7 @@ bkg_test = bkg_data[1100:2200]
 
 # LOAD MODELS
 print ('Loading signal data file...')
+# prefix = 'Type_B_Keras_Conv_Add_Layer_Dynamic/'
 # prefix = 'Type_B_Keras_Conv/'
 prefix = 'Type_GPD_Keras_Conv/'
 droneLoc = prefix+'models/approx_gpd_alpha0.05_epochs1500_thresh0.02.pkl'

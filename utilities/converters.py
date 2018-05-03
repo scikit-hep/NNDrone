@@ -53,7 +53,10 @@ class BasicConverter(object):
             refs.append(prob)
             flattened.append(b)
         inflate = 0  # to inflate the learning without change iterations
-        for q in range(self._num_epochs):
+        q = 0
+        avloss = 0
+        # convert until min epochs are passed and leave only if loss at minima
+        while (q < self._num_epochs) or (self._updatedLoss < avloss):
             # initialize the total loss for the epoch
             epochloss = []
 
@@ -97,7 +100,7 @@ class BasicConverter(object):
                     print('Last updated loss: %s' % self._updatedLoss)
                     self._updatedLoss = avloss
                     if self._add_layer_dynamic:
-                        drone_model.add_layer_dynamic(0)
+                        drone_model.add_layer_dynamic()
                     else:
                         drone_model.expand_layer_dynamic(0)
                     print('Model structure is now:')
@@ -111,4 +114,5 @@ class BasicConverter(object):
                 self._losses.append(avloss)
                 self._diffs.append(math.fabs(avloss - self._updatedLoss) / avloss)
                 self._updates.append(0)
+            q += 1
         return drone_model
