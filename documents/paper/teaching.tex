@@ -14,21 +14,21 @@ since the early 1990s~\cite{HORNIK1991251}.
 \subsection{Initial drone structure and corresponding training}
 
 The drone chosen for use in this article is initialised as a
-deep neural network with a single intermediate layer of 300
+deep neural network with a single intermediate (hidden) layer of 5
 nodes using a standard sigmoid activation function. The network
 has the number of inputs determined from the number of desired
 characteristics of the decay signature. A single output is taken
-from the network and a linear model is used to relate layers. 
+from the network and a linear model is used to relate layers.
 
 The model is made to approximate the original classifier through
 a supervised learning technique, though not in the traditional sense.
-Instead of a label as {\tt signal} or {\tt background} taken from the training data, the 
+Instead of a label as {\tt signal} or {\tt background} taken from the training data, the
 output of the original classifier is used as a label. This means that the
 loss function is defined as
 \begin{align}
 \mathcal{L} = \sum_i \left( F(\vec{x}_i) - G_i(\vec{x}_i) \right)^2,
 \end{align}
-where $F(\vec{x}_i)$ and $G(\vec{x}_i)$ are the outputs 
+where $F(\vec{x}_i)$ and $G(\vec{x}_i)$ are the outputs
 of the original and drone models on datapoint
 $i$ of the mini-batch, respectively. The advantage of such a loss function is per-event
 equivalence of the original and drone model, in addition to equivalence
@@ -42,16 +42,21 @@ empirical manner.
 \subsection{Model morphing during the learning phase}
 
 In order to keep the hyperparameter space to the minimum required level,
-additional degrees of freedom are added only when required. 
-This removes the possibility of choosing an incorrect size of the 
+additional degrees of freedom are added only when required.
+This removes the possibility of choosing an incorrect size of the
 drone network. During the learning phase, the following conditions are required
 to trigger the extension of the hidden layer in the $j^{\rm th}$ epoch:
 \begin{align}
-\delta &\equiv |\mathcal{L}_j-\mathcal{L}_{j-1}|/\mathcal{L}_j < \kappa,\label{eq:cond1}\\ 
-\mathcal{L}_j &< \hat{\mathcal{L}} - \delta\mathcal{L}_j \label{eq:cond2},
+\delta_{j} &\equiv |\mathcal{L}_j-\mathcal{L}_{j-1}|/\mathcal{L}_j < \kappa,\label{eq:cond1}\\
+\sigma_{j} &\equiv n + m (1 - e^{-b\hat{t}})\delta_{j}\mathcal{L}_j \nonumber\\
+\mathcal{L}_j &< \hat{\mathcal{L}} - \sigma_{j} \label{eq:cond2},
 \end{align}
-where $\kappa$ is the required threshold and $\hat{\mathcal{L}}$ is the value
-of the loss function when the hidden layer was last extended.
+where $\kappa$ is the required threshold, $\sigma$ is the required minimum improvement
+of the loss function and $\hat{\mathcal{L}}$ is the value of the loss function when
+the hidden layer was last extended. The required improvement starts from a minimum $\n$,
+increases with epoch number after previous extension $\hat{t}$ and steepness $\b$
+until a maximum of $n + m$. This ensures an change cannot be triggered immediately
+after a previous one and the learning still can proceed if more freedom is indeed required.
 
 When the conditions in eqs.~\ref{eq:cond1} and \ref{eq:cond2} are met, the linear model
 is updated to extend the weights matrices and bias vectors
