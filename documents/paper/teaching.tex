@@ -53,8 +53,8 @@ to trigger the extension of the hidden layer in the $j^{\rm th}$ epoch:
 \end{align}
 where $\kappa$ is the required threshold, $\sigma$ is the required minimum improvement
 of the loss function and $\hat{\mathcal{L}}$ is the value of the loss function when
-the hidden layer was last extended. The required improvement starts from a minimum $\n$,
-increases with epoch number after previous extension $\hat{t}$ and steepness $\b$
+the hidden layer was last extended. The required improvement starts from a minimum $n$,
+increases with epoch number after previous extension $\hat{t}$ and steepness $b$
 until a maximum of $n + m$. This ensures an change cannot be triggered immediately
 after a previous one and the learning still can proceed if more freedom is indeed required.
 
