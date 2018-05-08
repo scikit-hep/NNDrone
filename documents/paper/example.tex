@@ -201,15 +201,16 @@ is available.
 The identical performance show in Fig.~\ref{fig:roc} is clearly the ideal scenario, even though
 such good agreement is not always required to give better results than other low-latency methods.
 However it is worth noting that the drones created in the examples of Sec.~\ref{sec:hep} are faster to
-evaluate. The comparison of the time taken for each model evaluation, determined from the XXX graphics processing unit of a desktop
-using a XXX processor is shown in Table~\ref{tab:comp}.
+evaluate. The comparison of the time taken for each model evaluation, determined from a desktop
+using a Intel Core i7-4770 processor is shown in Table~\ref{tab:comp}.
 \begin{table}[t]
   \centering
   \caption{Processing time comparisons of the original models and drone
   approximations for the HEP examples. \label{tab:comp}}
   \begin{tabular}{l|rr}
-   & original model & drone \\\hline
-    B decay & XX & XX \\
-    jet separation & XX & XX \\
+                   & original model                  & drone \\
+    \hline
+    B decay        & $19.3 \pm 0.2 \times 10^{-5}$ s & $2.7 \pm 0.2 \times 10^{-5}$ s \\
+    jet separation & $25.2 \pm 0.2 \times 10^{-5}$ s & $2.9 \pm 0.2 \times 10^{-5}$ s \\
   \end{tabular}
 \end{table}
