@@ -30,7 +30,7 @@ SOURCES    = $(TEXSOURCES) $(FIGSOURCES)
 OUTPUT = $(MAIN)$(MAINEXT)
 
 # prescription how to make output (your favorite commands to process latex)
-# do latex twice to make sure that all cross-references are updated 
+# do latex twice to make sure that all cross-references are updated
 $(OUTPUT): $(SOURCES) Makefile
 	$(BUILDCOMMAND)
 
@@ -43,5 +43,5 @@ clean:
 	rm -f *~ *.aux *.log *.bbl *.blg *.dvi *.tmp *.out *.blg *.bbl $(MAIN)$(MAINEXT) $(MAIN).ps
 
 # remove output file
-rmout: 
+rmout:
 	rm  $(OUTPUT)

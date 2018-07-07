@@ -20,24 +20,24 @@ which is constructed as
 \begin{lstlisting}
 classifier = Sequential()
 classifier.add(LocallyConnected1D(
-filters = 90, kernel_size = 2, 
-activation = 'sigmoid', 
+filters = 90, kernel_size = 2,
+activation = 'sigmoid',
 input_shape = (len(setTrain[0]), 1)))
 classifier.add(GlobalMaxPooling1D())
 classifier.add(Dense(30, activation = 'sigmoid'))
 classifier.add(Dense(1, activation = 'sigmoid'))
-classifier.compile(optimizer = 'adam', 
+classifier.compile(optimizer = 'adam',
 loss = 'binary_crossentropy'
 , metrics = ['accuracy'])
 \end{lstlisting}
 %\begin{lstlisting}
-%classifier = MLPClassifier(activation='relu', 
-%    batch_size='auto', beta_1=0.9, beta_2=0.999, 
-%    early_stopping=False, epsilon=1e-08, 
-%    hidden_layer_sizes=(3, 3), 
+%classifier = MLPClassifier(activation='relu',
+%    batch_size='auto', beta_1=0.9, beta_2=0.999,
+%    early_stopping=False, epsilon=1e-08,
+%    hidden_layer_sizes=(3, 3),
 %    learning_rate='constant',
 %    learning_rate_init=0.001, max_iter=200,
-%    nesterovs_momentum=True, power_t=0.5, 
+%    nesterovs_momentum=True, power_t=0.5,
 %    random_state=1, shuffle=True,
 %    solver='lbfgs', tol=0.0001, momentum=0.9,
 %    validation_fraction=0.1, verbose=False,
@@ -45,8 +45,8 @@ loss = 'binary_crossentropy'
 %\end{lstlisting}
 
 The neural network is trained using kinematic properties of the respective decays.
-These include the pseudorapidity, $\eta$, and momentum transverse to the direction of the 
-input proton beams, \pt, of the decaying particle. In addition, the minimum and maximum \pt and $\eta$ 
+These include the pseudorapidity, $\eta$, and momentum transverse to the direction of the
+input proton beams, \pt, of the decaying particle. In addition, the minimum and maximum \pt and $\eta$
 of the final state particles is used. The signal and background distributions of the input variables
 are shown in Fig.~\ref{fig:inputs}.
 %
@@ -72,7 +72,7 @@ reserved in order to test for overtraining.
 %\begin{figure*}[t]
 %\centering
 %\includegraphics[width=0.45\textwidth]{event_probability}
-%\caption{\small 
+%\caption{\small
 %Output distributions of the signal and background training and
 %test samples from the classifier after training.
 %}
@@ -87,7 +87,7 @@ reserved in order to test for overtraining.
 
 A further demonstration is provided demonstrating a classifiers ability to separate different
 kinds of jets. The data sample to show this has been generated from Pythia~\cite{Sjostrand:2007gs}, using the FastJet~\cite{Cacciari:2011ma} package
-to create the jet objects. 
+to create the jet objects.
 The signal sample is chosen to be the jet produced in association with a W boson.
 The background sample is chosen to be jets from Quantum Chromodynamics processes.
 
@@ -97,7 +97,7 @@ The machine learning classifier chosen is also a Keras-based convolutional neura
 constructed in an identical way as described in Sec~\ref{sec:orig_training}.
 
 The neural network is trained using 4 jet properties consisting of the energy,
-the combined mass of the particles in the jet, the pseudorapidity, and the jet $K_t$ (the definition 
+the combined mass of the particles in the jet, the pseudorapidity, and the jet $K_t$ (the definition
 of the $K_t$ variable and a review of jet reconstruction algorithms
 may be found in Ref.~\cite{Atkin:2015msa}).
 The signal and background distributions of the input variables
@@ -140,8 +140,8 @@ The performance of the original classifiers compared to the drone classifiers ar
 \centering
 \includegraphics[width=0.45\textwidth]{loss_history}
 \includegraphics[width=0.45\textwidth]{loss_history_gpd}
-\caption{\small 
-Convergence of the loss function during the drone training 
+\caption{\small
+Convergence of the loss function during the drone training
   for the case of the B
   decay (left) and jet separation (right) examples.
 }
@@ -151,7 +151,7 @@ Convergence of the loss function during the drone training
 \centering
 \includegraphics[width=0.45\textwidth]{diff_history}
 \includegraphics[width=0.45\textwidth]{diff_history_gpd}
-\caption{\small 
+\caption{\small
 Difference in the loss function with respect to the previous iteration
   for the case of the B
   decay (left) and jet separation (right) examples.
@@ -164,7 +164,7 @@ depict the epoch number in which the number of hyperperameters was increased.
 \centering
 \includegraphics[width=0.45\textwidth]{roc}
 \includegraphics[width=0.45\textwidth]{roc_gpd}
-\caption{\small 
+\caption{\small
   Signal efficiency versus background rejection of the original classifier (red) and drone
   approximation (blue)
   for the case of the B
@@ -178,19 +178,19 @@ depict the epoch number in which the number of hyperperameters was increased.
 for low-latency environments}
 \label{sec:storage}
 
-The hyperparameters and structure of the drone are required to be 
-portable and easily stored for later usage. For this the {\tt JSON} format was chosen as 
+The hyperparameters and structure of the drone are required to be
+portable and easily stored for later usage. For this the {\tt JSON} format was chosen as
 mediator. It is human-readable and easily accessible in the {\tt Python} and {\tt C++}
 environments commonly used in HEP. Thus, it is readily deployable in both personal and production environments.
 
-Provided is a tool to export and save a drone neural network to a {\tt JSON} 
-formatted file which preserves the input \& output structure, 
-the layers and nodes, all hyperparameters and activation functions. 
+Provided is a tool to export and save a drone neural network to a {\tt JSON}
+formatted file which preserves the input \& output structure,
+the layers and nodes, all hyperparameters and activation functions.
 The drone configuration is later read in by an equivalent tool into the production software framework,
-which then constructs a class object based on the Keras model. The {\tt C++} class implements 
+which then constructs a class object based on the Keras model. The {\tt C++} class implements
 a flexible member structure that is capable of completely reproducing the original drone. The production
 implementation may be used for all data reduction levels, be it in the form of a low-latency trigger
-for example up to the latest stages of data handling and output. 
+for example up to the latest stages of data handling and output.
 
 A major advantage of this method is that analysts and users have the full freedom of latest developments
 of industry standards, but need only to support a more manageable implementation in the low-latency
