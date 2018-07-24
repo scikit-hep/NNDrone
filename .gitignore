@@ -1,5 +1,13 @@
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
 *.pyc
 *.xml
 *DS_Store
 *.iml
 *.so
+main.pdf

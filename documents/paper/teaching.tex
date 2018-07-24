@@ -48,15 +48,33 @@ drone network. During the learning phase, the following conditions are required
 to trigger the extension of the hidden layer in the $j^{\rm th}$ epoch:
 \begin{align}
 \delta_{j} &\equiv |\mathcal{L}_j-\mathcal{L}_{j-1}|/\mathcal{L}_j < \kappa,\label{eq:cond1}\\
-\sigma_{j} &\equiv n + m (1 - e^{-b\hat{t}})\delta_{j}\mathcal{L}_j \nonumber\\
+\sigma_{j} &\equiv m (1 - e^{-b(\hat{t} + n)})\delta_{j}\mathcal{L}_j \nonumber\\
 \mathcal{L}_j &< \hat{\mathcal{L}} - \sigma_{j} \label{eq:cond2},
 \end{align}
 where $\kappa$ is the required threshold, $\sigma$ is the required minimum improvement
 of the loss function and $\hat{\mathcal{L}}$ is the value of the loss function when
-the hidden layer was last extended. The required improvement starts from a minimum $n$,
+the hidden layer was last extended. The required improvement starts from a minimum at $n$,
 increases with epoch number after previous extension $\hat{t}$ and steepness $b$
-until a maximum of $n + m$. This ensures an change cannot be triggered immediately
-after a previous one and the learning still can proceed if more freedom is indeed required.
+until a maximum at $m$. The precise values of the parameters
+$\kappa$, $n$, $m$, $b$ are not of particular importance. Rather, the topology described by
+eqs.~\ref{eq:cond1} and \ref{eq:cond2} is crucial. The relative loss function improvement,
+$\delta_{j}$, can never realistically be larger than $1$ and the limit, $\kappa$, at which
+no significant improvement occurs is acceptably set at 0.02 (smaller than $2\sigma$
+standard deviations). The descent in loss space, $\hat{\mathcal{L}} - \mathcal{L}_j$,
+is further required to be significantly large, minimizing the chance of getting stuck in
+isolated local minima. The function, $\sigma_{j}$, is chosen to increase this requirement
+with each epoch for two reasons - it is bounded and can approach its asymptote arbitrarily fast.
+It scales $\delta_{j}$ such that the loss descent must be significant
+before an update is triggered. Since $\delta_{j}$ is expected to decrease with epoch number,
+the minumum and maximum values of $\sigma_{j}$ are chosen as such:
+\begin{align}
+\sigma_{j}(\hat{t} = 0) &\equiv min(\sigma_{j}) \equiv 2.5\delta_{j}\mathcal{L}_j \implies 5\sigma ~\text{std.dev.} \\
+\sigma_{j}(\hat{t} = \infty) &\equiv min(\sigma_{j}) \equiv 25\delta_{j}\mathcal{L}_j \implies 50\sigma ~\text{std.dev.}
+\end{align}
+The steepness, $b$, is chosen such that the transition from the minimum to maximum takes
+on average 50 epochs. This ensures a change cannot be triggered immediately
+after a previous one and the learning can still proceed if more freedom is indeed required.
+Also, it allows the network to stabilize after a big change.
 
 When the conditions in eqs.~\ref{eq:cond1} and \ref{eq:cond2} are met, the linear model
 is updated to extend the weights matrices and bias vectors
