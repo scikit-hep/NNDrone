@@ -1,38 +1,38 @@
 \section{Introduction}
 \label{sec:intro}
 
-Data collection rates in high energy physics (HEP), particularly those at the Large Hadron Collider (LHC)
-are a continuing challenge and require large amounts of computing power to handle.
-For example, the \lhcb experiment~\cite{Alves:2008zz} at the LHC processes an event rate of 1\mhz in a software
-based trigger~\cite{LHCb-DP-2014-002}. The purpose of this trigger is to reduce the output
+Data-collection rates in high energy physics (HEP), particularly those at the Large Hadron Collider (LHC),
+are a continuing challenge and require large amounts of computing power to process.
+For example, the \lhcb experiment~\cite{Alves:2008zz} processes an event rate of 1\mhz in a software-based 
+trigger~\cite{LHCb-DP-2014-002}. The purpose of this trigger is to reduce the output
 data rate to manageable levels, \ie to fit in the available storage resources offline.
 This amounts to a reduction from 60\,GB per second to an output data rate of 0.6\,GB per second. 
 In order to accomplish such a remarkable real-time data reduction in the software based trigger,
 novel ideas have been introduced, such as the real-time alignment and calibration of the detector~\cite{Xu:2016mik},
 in addition to the concept of real-time analysis~\cite{Aaij:2016rxn}, whereby a subset of the particles from the proton collisions need only
-be saved, and not the detector raw data.
+be saved, and not the raw data from the sub-detectors.
 The aforementioned data-reduction strategy is similar across all LHC experiments, where
 software based selections are applied in low-latency environments.
 
-Machine learning (ML) is becoming an evermore important tool in the data reduction,
+Machine learning (ML) is becoming an evermore important tool for data reduction,
 be it with the identification of interesting event topologies, or the distinction
 between individual particle species. For the case of \lhcb data-taking, over 600
-unique signitures are searched for in parallel in real time, each with its own set of requirements.
+unique signatures are searched for in parallel in real time, each with its own set of requirements.
 However only a handful at present make use of machine learning.
 
-A large ecosystem is available to analysts in the creation of machine learning classifiers,
+A large ecosystem is available for analysts to create machine learning classifiers,
 the TMVA~\cite{Hocker:2007ht} and Neurobayes~\cite{Feindt:2006pm} tools being among the most widely used.
 More recent examples gaining popularity include Scikit-Learn~\cite{Pedregosa:2012toh}
 and Keras~\cite{keras}. It has been proven in many LHC analyses that
-ML classifiers are better able to account for differences in the correlations between
-training variables that are seen in signal and background events, enabling more
+ML classifiers account for differences in the correlations of
+training variables between signal and background events, therefore enabling more
 powerful data reduction.
-Despite this, the majority of the identification of interesting topologies is performed
+Despite this, the majority of the signal isolation is performed
 without the use of ML classifiers. Often the reason for this is the relative difficulty in
 the application of a preferred ML classifier to the {\tt C++/Python} combination
 of event selection frameworks~\cite{Barrand:2001ny}. Another 
 reason is the required algorithm speed. Methods such as Bonsai
-Boosted Decision Trees (BBDTs)~\cite{Gligorov:2012qt} have been implemented in order
+Boosted Decision Trees (BBDTs)~\cite{Gligorov:2012qt} have been developed in order
 to enable the quick evaluation of models. The BBDT approach relies on the 
 discretization of inputs such that all possible combinations along with
 the associated classifier response is known before the model is evaluated.
@@ -45,6 +45,6 @@ given ML learning classifier from any chosen package such as SciKit-Learn or Ker
 The resulting parameters are then fed into a {\tt C++} algorithm that
 performs execution in HEP production environments. The details of the
 drone training are provided in Sec.~\ref{sec:dlearn}. This is followed
-by a real example using simulated data in Sec.~\ref{sec:hep}. The advantages
+by real examples using simulated data in Sec.~\ref{sec:hep}. The advantages
 of the approach are discussed in Sec.~\ref{sec:storage} and a summary is 
 provided in Sec.~\ref{sec:summary}.

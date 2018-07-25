@@ -937,6 +937,7 @@
 \usepackage{lineno}  
 \usepackage{xspace} 
 \usepackage{caption} 
+\usepackage{comment} 
 \renewcommand{\captionfont}{\small}
 \renewcommand{\captionlabelfont}{\small}
 \usepackage[utf8]{inputenc}
@@ -1006,8 +1007,8 @@ end#1\endcsname
     pdfmenubar=true,        % show Acrobat’s menu?
     pdffitwindow=false,     % window fit to page when opened
     pdfstartview={FitH},    % fits the width of the page to the window
-    pdfauthor={Sean Benson},     % author
-    pdfcreator={Sean Benson},   % creator of the document
+    pdfauthor={Sean Benson, Konstantin Gizdov},     % author
+    pdfcreator={Sean Benson, Konstantin Gizdov},   % creator of the document
     pdfnewwindow=true,      % links in new window
     colorlinks=true,       % false: boxed links; true: colored links
     linkcolor=blue,          % color of internal links (change box color with linkbordercolor)
@@ -1082,12 +1083,13 @@ in order to limit the number of possible combinations.
 
 We present in this article a package that allows an analyst to 
 train a drone neural network that learns the important features of a 
-given ML learning classifier from any chosen package such as SciKit-Learn.
+given ML learning classifier from any chosen package such as SciKit-Learn or Keras.
 The resulting parameters are then fed into a {\tt C++} algorithm that
 performs execution in HEP production environments. The details of the
 drone training are provided in Sec.~\ref{sec:dlearn}. This is followed
 by a real example using simulated data in Sec.~\ref{sec:hep}. The advantages
-of the approach are discussed in Sec.~\ref{sec:summary}.
+of the approach are discussed in Sec.~\ref{sec:storage} and a summary is 
+provided in Sec.~\ref{sec:summary}.
 
 
 \section{Drone learning}
@@ -1099,25 +1101,28 @@ The principle utilised in the training of the drone is that sufficient
 approximation of the original network is achieved with sufficient expansion
 of the hyperparameter space of the drone, and that the same global minimum
 of the loss function can be found, as reported in Ref.~\cite{losssurfaces}.
+The ability of a neural network with a continuous, bounded, non-constant activation
+function to approximate functions to an arbitrary degree has been indeed known
+since the early 1990s~\cite{HORNIK1991251}.
 
 \subsection{Initial drone structure and corresponding training}
 
 The drone chosen for use in this article is initialised as a
-deep neural network with a single intermediate layer of 300
+deep neural network with a single intermediate (hidden) layer of 5
 nodes using a standard sigmoid activation function. The network
 has the number of inputs determined from the number of desired
 characteristics of the decay signature. A single output is taken
-from the network and a linear model is used to relate layers. 
+from the network and a linear model is used to relate layers.
 
 The model is made to approximate the original classifier through
 a supervised learning technique, though not in the traditional sense.
-Instead of a label as {\tt signal} or {\tt background} taken from the training data, the 
+Instead of a label as {\tt signal} or {\tt background} taken from the training data, the
 output of the original classifier is used as a label. This means that the
 loss function is defined as
 \begin{align}
 \mathcal{L} = \sum_i \left( F(\vec{x}_i) - G_i(\vec{x}_i) \right)^2,
 \end{align}
-where $F(\vec{x}_i)$ and $G(\vec{x}_i)$ are the outputs 
+where $F(\vec{x}_i)$ and $G(\vec{x}_i)$ are the outputs
 of the original and drone models on datapoint
 $i$ of the mini-batch, respectively. The advantage of such a loss function is per-event
 equivalence of the original and drone model, in addition to equivalence
@@ -1131,16 +1136,39 @@ empirical manner.
 \subsection{Model morphing during the learning phase}
 
 In order to keep the hyperparameter space to the minimum required level,
-additional degrees of freedom are added only when required. 
-This removes the possibility of choosing an incorrect size of the 
+additional degrees of freedom are added only when required.
+This removes the possibility of choosing an incorrect size of the
 drone network. During the learning phase, the following conditions are required
 to trigger the extension of the hidden layer in the $j^{\rm th}$ epoch:
 \begin{align}
-\delta &\equiv (\mathcal{L}_j-\mathcal{L}_{j-1})/\mathcal{L}_j < \kappa,\label{eq:cond1}\\ 
-\mathcal{L}_j &< \hat{\mathcal{L}} - \delta\mathcal{L}_j \label{eq:cond2},
+\delta_{j} &\equiv |\mathcal{L}_j-\mathcal{L}_{j-1}|/\mathcal{L}_j < \kappa,\label{eq:cond1}\\
+\sigma_{j} &\equiv m (1 - e^{-b(\hat{t} + n)})\delta_{j}\mathcal{L}_j \nonumber\\
+\mathcal{L}_j &< \hat{\mathcal{L}} - \sigma_{j} \label{eq:cond2},
 \end{align}
-where $\kappa$ is the required threshold and $\hat{\mathcal{L}}$ is the value
-of the loss function when the hidden layer was last extended.
+where $\kappa$ is the required threshold, $\sigma$ is the required minimum improvement
+of the loss function and $\hat{\mathcal{L}}$ is the value of the loss function when
+the hidden layer was last extended. The required improvement starts from a minimum at $n$,
+increases with epoch number after previous extension $\hat{t}$ and steepness $b$
+until a maximum at $m$. The precise values of the parameters
+$\kappa$, $n$, $m$, $b$ are not of particular importance. Rather, the topology described by
+eqs.~\ref{eq:cond1} and \ref{eq:cond2} is crucial. The relative loss function improvement,
+$\delta_{j}$, can never realistically be larger than $1$ and the limit, $\kappa$, at which
+no significant improvement occurs is acceptably set at 0.02 (smaller than $2\sigma$
+standard deviations). The descent in loss space, $\hat{\mathcal{L}} - \mathcal{L}_j$,
+is further required to be significantly large, minimizing the chance of getting stuck in
+isolated local minima. The function, $\sigma_{j}$, is chosen to increase this requirement
+with each epoch for two reasons - it is bounded and can approach its asymptote arbitrarily fast.
+It scales $\delta_{j}$ such that the loss descent must be significant
+before an update is triggered. Since $\delta_{j}$ is expected to decrease with epoch number,
+the minumum and maximum values of $\sigma_{j}$ are chosen as such:
+\begin{align}
+\sigma_{j}(\hat{t} = 0) &\equiv min(\sigma_{j}) \equiv 2.5\delta_{j}\mathcal{L}_j \implies 5\sigma ~\text{std.dev.} \\
+\sigma_{j}(\hat{t} = \infty) &\equiv min(\sigma_{j}) \equiv 25\delta_{j}\mathcal{L}_j \implies 50\sigma ~\text{std.dev.}
+\end{align}
+The steepness, $b$, is chosen such that the transition from the minimum to maximum takes
+on average 50 epochs. This ensures a change cannot be triggered immediately
+after a previous one and the learning can still proceed if more freedom is indeed required.
+Also, it allows the network to stabilize after a big change.
 
 When the conditions in eqs.~\ref{eq:cond1} and \ref{eq:cond2} are met, the linear model
 is updated to extend the weights matrices and bias vectors
@@ -1149,242 +1177,222 @@ The associated neurons are initialised with a zero weight
 to ensure continuity of the loss function value.
 
 
-\section{High energy physics applications - B physics}
-\label{sec:hepB}
+\section{High energy physics applications}
+\label{sec:hep}
 
-\subsection{Data sample}
+\subsection{B physics}
+
+\subsubsection{Data sample}
 
 In order to demonstrate the functionality of the toolkit, data samples generated
 from the RapidSim package~\cite{rapid} are used. The interesting signal is chosen
 to be the $\Bs\to\jpsi(\to\mu\mu )\phi (\to\PK\PK )$ decay, and the background is
 the $\Dz\to\pi\pi\pi\pi$ decay. A total of 10000 candidates is generated for each decay.
 
-\subsection{Training of the original classifier}
+\subsubsection{Training of the original classifier}
+\label{sec:orig_training}
 
-The machine learning classifier chosen is the Multi-layer perceptron of SciKit-Learn,
+%The machine learning classifier chosen is the Multi-layer perceptron of SciKit-Learn,
+%which is constructed as
+The machine learning classifier chosen is a Keras-based convolutional neural net,
 which is constructed as
 \begin{lstlisting}
-classifier = MLPClassifier(activation='relu', 
-    batch_size='auto', beta_1=0.9, beta_2=0.999, 
-    early_stopping=False, epsilon=1e-08, 
-    hidden_layer_sizes=(3, 3), 
-    learning_rate='constant',
-    learning_rate_init=0.001, max_iter=200,
-    nesterovs_momentum=True, power_t=0.5, 
-    random_state=1, shuffle=True,
-    solver='lbfgs', tol=0.0001, momentum=0.9,
-    validation_fraction=0.1, verbose=False,
-    warm_start=False, alpha=1e-05)
+classifier = Sequential()
+classifier.add(LocallyConnected1D(
+filters = 90, kernel_size = 2,
+activation = 'sigmoid',
+input_shape = (len(setTrain[0]), 1)))
+classifier.add(GlobalMaxPooling1D())
+classifier.add(Dense(30, activation = 'sigmoid'))
+classifier.add(Dense(1, activation = 'sigmoid'))
+classifier.compile(optimizer = 'adam',
+loss = 'binary_crossentropy'
+, metrics = ['accuracy'])
 \end{lstlisting}
+%\begin{lstlisting}
+%classifier = MLPClassifier(activation='relu',
+%    batch_size='auto', beta_1=0.9, beta_2=0.999,
+%    early_stopping=False, epsilon=1e-08,
+%    hidden_layer_sizes=(3, 3),
+%    learning_rate='constant',
+%    learning_rate_init=0.001, max_iter=200,
+%    nesterovs_momentum=True, power_t=0.5,
+%    random_state=1, shuffle=True,
+%    solver='lbfgs', tol=0.0001, momentum=0.9,
+%    validation_fraction=0.1, verbose=False,
+%    warm_start=False, alpha=1e-05)
+%\end{lstlisting}
 
-The neural network is trained using kinematical properties of the respective decays.
-These include the pseudorapidity, $\eta$, and momentum transverse to the direction of the 
-input proton beams, \pt, of the decaying particle. In addition, the minimum and maximum \pt and $\eta$ 
+The neural network is trained using kinematic properties of the respective decays.
+These include the pseudorapidity, $\eta$, and momentum transverse to the direction of the
+input proton beams, \pt, of the decaying particle. In addition, the minimum and maximum \pt and $\eta$
 of the final state particles is used. The signal and background distributions of the input variables
 are shown in Fig.~\ref{fig:inputs}.
 %
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.33\textwidth]{pt_comp.pdf}
-\includegraphics[width=0.33\textwidth]{eta_comp.pdf}
-\includegraphics[width=0.33\textwidth]{minpt_comp.pdf}
-\includegraphics[width=0.33\textwidth]{maxpt_comp.pdf}
-\includegraphics[width=0.33\textwidth]{mineta_comp.pdf}
-\includegraphics[width=0.33\textwidth]{maxeta_comp.pdf}
+\includegraphics[width=0.33\textwidth]{pt_comp}
+\includegraphics[width=0.33\textwidth]{eta_comp}
+\includegraphics[width=0.33\textwidth]{minpt_comp}
+\includegraphics[width=0.33\textwidth]{maxpt_comp}
+\includegraphics[width=0.33\textwidth]{mineta_comp}
+\includegraphics[width=0.33\textwidth]{maxeta_comp}
 \caption{\small Comparison of the signal and background distributions
-used to train the SciKit-Learn classifier.}
+used to train the Keras B decay classifier.}
 \label{fig:inputs}
 \end{figure*}
 
 In the training of the original classifier, half of the data is
 reserved in order to test for overtraining.
-The output probability distributions of the signal and background samples
-after the training are shown in Fig.~\ref{fig:output}.
-It can be seen that the test and training samples are in good agreement,
-showing that the original SciKit-Learn classifier is not significantly overtrained.
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.45\textwidth]{event_probability.pdf}
-\caption{\small 
-Output distributions of the signal and background training and
-test samples from the classifier after training.
-}
-\label{fig:output}
-\end{figure*}
+%The output probability distributions of the signal and background samples
+%after the training are shown in Fig.~\ref{fig:output}.
+%It can be seen that the test and training samples are in good agreement,
+%showing that the original SciKit-Learn classifier is not significantly overtrained.
+%\begin{figure*}[t]
+%\centering
+%\includegraphics[width=0.45\textwidth]{event_probability}
+%\caption{\small
+%Output distributions of the signal and background training and
+%test samples from the classifier after training.
+%}
+%\label{fig:output}
+%\end{figure*}
 
-\section{High energy physics applications - Jet separation}
+
+\subsection{Jet separation}
 \label{sec:hepGPD}
 
-\subsection{Data sample}
+\subsubsection{Data sample}
 
 A further demonstration is provided demonstrating a classifiers ability to separate different
-kinds of jets. The data sample to show this has been generated from Pythia, using the FastJet package
-to create the jet objects. The signal sample is chosen to be the jet produced in association with a W boson.
-The background sample is chosen to be In order to demonstrate the functionality of the toolkit, data samples generated
-from the RapidSim package~\cite{rapid} are used. The interesting signal is chosen
-to be the $\Bs\to\jpsi(\to\mu\mu )\phi (\to\PK\PK )$ decay, and the background is
-the $\Dz\to\pi\pi\pi\pi$ decay. A total of 10000 candidates is generated for each decay.
+kinds of jets. The data sample to show this has been generated from Pythia~\cite{Sjostrand:2007gs}, using the FastJet~\cite{Cacciari:2011ma} package
+to create the jet objects.
+The signal sample is chosen to be the jet produced in association with a W boson.
+The background sample is chosen to be jets from Quantum Chromodynamics processes.
 
-\subsection{Training of the original classifier}
+\subsubsection{Training of the original classifier}
 
-The machine learning classifier chosen is the Multi-layer perceptron of SciKit-Learn,
-which is constructed as
-\begin{lstlisting}
-classifier = MLPClassifier(activation='relu', 
-    batch_size='auto', beta_1=0.9, beta_2=0.999, 
-    early_stopping=False, epsilon=1e-08, 
-    hidden_layer_sizes=(3, 3), 
-    learning_rate='constant',
-    learning_rate_init=0.001, max_iter=200,
-    nesterovs_momentum=True, power_t=0.5, 
-    random_state=1, shuffle=True,
-    solver='lbfgs', tol=0.0001, momentum=0.9,
-    validation_fraction=0.1, verbose=False,
-    warm_start=False, alpha=1e-05)
-\end{lstlisting}
+The machine learning classifier chosen is also a Keras-based convolutional neural net,
+constructed in an identical way as described in Sec~\ref{sec:orig_training}.
 
-The neural network is trained using kinematical properties of the respective decays.
-These include the pseudorapidity, $\eta$, and momentum transverse to the direction of the 
-input proton beams, \pt, of the decaying particle. In addition, the minimum and maximum \pt and $\eta$ 
-of the final state particles is used. The signal and background distributions of the input variables
-are shown in Fig.~\ref{fig:inputs}.
+The neural network is trained using 4 jet properties consisting of the energy,
+the combined mass of the particles in the jet, the pseudorapidity, and the jet $K_t$ (the definition
+of the $K_t$ variable and a review of jet reconstruction algorithms
+may be found in Ref.~\cite{Atkin:2015msa}).
+The signal and background distributions of the input variables
+are shown in Fig.~\ref{fig:inputsGPD}.
 %
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.33\textwidth]{pt_comp.pdf}
-\includegraphics[width=0.33\textwidth]{eta_comp.pdf}
-\includegraphics[width=0.33\textwidth]{minpt_comp.pdf}
-\includegraphics[width=0.33\textwidth]{maxpt_comp.pdf}
-\includegraphics[width=0.33\textwidth]{mineta_comp.pdf}
-\includegraphics[width=0.33\textwidth]{maxeta_comp.pdf}
+\includegraphics[width=0.33\textwidth]{et_comp_gpd}
+\includegraphics[width=0.33\textwidth]{eta_comp_gpd}
+\includegraphics[width=0.33\textwidth]{m_comp_gpd}
+\includegraphics[width=0.33\textwidth]{kt_comp_gpd}
 \caption{\small Comparison of the signal and background distributions
-used to train the SciKit-Learn classifier.}
-\label{fig:inputs}
+used to train the Keras classifier .}
+\label{fig:inputsGPD}
 \end{figure*}
 
-In the training of the original classifier, half of the data is
-reserved in order to test for overtraining.
-The output probability distributions of the signal and background samples
-after the training are shown in Fig.~\ref{fig:output}.
-It can be seen that the test and training samples are in good agreement,
-showing that the original SciKit-Learn classifier is not significantly overtrained.
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.45\textwidth]{event_probability.pdf}
-\caption{\small 
-Output distributions of the signal and background training and
-test samples from the classifier after training.
-}
-\label{fig:output}
-\end{figure*}
+\subsection{Drone conversions}
 
-\subsection{Drone conversion}
-
-The drone neural network is trained following the procedure outlined in Sec.~\ref{sec:dlearn},
-In total, 300 epochs are used with
+The drone neural networks are trained following the procedure outlined in Sec.~\ref{sec:dlearn},
+In total, 1500 epochs are used with
 the learning rate of the stochastic gradient descent set to 0.05.
-The value of $\kappa$ is chosen to be 0.02.
+The value of $\kappa$ is chosen to be 0.01.
 
-The loss history of the training is shown in Fig.~\ref{fig:loss}
+The loss history of the drone approximations are shown in Fig.~\ref{fig:loss}
 as a function of epoch number.
 The convergence is also shown in Fig.~\ref{fig:iterdiff}, which shows
 the difference in the value of the loss function with respect to the previous
-epoch. The epochs that triggered an increase in the number of hyperparameters
+epoch. The epochs that trigger an increase in the number of hyperparameters
 are also overlaid.
-In total in this example, an increase was triggered 104 times. The total number
-of parameters in the final drone neural network is therefore 3233. It is interesting
+In total for the case of B decays, an increase was triggered 38 times compared to 10 times for the
+jet separation classifier. The total number
+of parameters in the final drone neural networks are therefore 302 and 106 for the B decay drone
+and the jet separation drone, respectively. It is interesting
 to note that with the algorithm design of Sec.~\ref{sec:dlearn}, the introduction
-of the new parameter space causes the drone network to learn faster, as evidenced by
-increases in Fig.~\ref{fig:iterdiff} with continuing descent of the loss function.
+of the new parameter space causes the drone networks to learn faster, as evidenced by
+increases in Fig.~\ref{fig:iterdiff} with continuing descent of the loss functions.
+%
+The performance of the original classifiers compared to the drone classifiers are shown in Figure~\ref{fig:roc}.
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.45\textwidth]{loss_history.pdf}
-\caption{\small 
-Convergence of the loss function during the drone training.
+\includegraphics[width=0.45\textwidth]{loss_history}
+\includegraphics[width=0.45\textwidth]{loss_history_gpd}
+\caption{\small
+Convergence of the loss function during the drone training
+  for the case of the B
+  decay (left) and jet separation (right) examples.
 }
 \label{fig:loss}
 \end{figure*}
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.45\textwidth]{diff_history.pdf}
-\caption{\small 
-Difference in the loss function with respect to the previous iteration. The green triangles
+\includegraphics[width=0.45\textwidth]{diff_history}
+\includegraphics[width=0.45\textwidth]{diff_history_gpd}
+\caption{\small
+Difference in the loss function with respect to the previous iteration
+  for the case of the B
+  decay (left) and jet separation (right) examples.
+  The green triangles
 depict the epoch number in which the number of hyperperameters was increased.
 }
 \label{fig:iterdiff}
 \end{figure*}
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.45\textwidth]{approx_vs_truth_diff.pdf}
-\caption{\small 
-Difference between the output response of the drone model with respect to
-the original classifier for data points in the test sample.
+\includegraphics[width=0.45\textwidth]{roc}
+\includegraphics[width=0.45\textwidth]{roc_gpd}
+\caption{\small
+  Signal efficiency versus background rejection of the original classifier (red) and drone
+  approximation (blue)
+  for the case of the B
+  decay (left) and jet separation (right) examples.
 }
-\label{fig:diff}
+\label{fig:roc}
 \end{figure*}
 
-\subsection{Drone conversion}
 
-The drone neural network is trained following the procedure outlined in Sec.~\ref{sec:dlearn},
-In total, 300 epochs are used with
-the learning rate of the stochastic gradient descent set to 0.05.
-The value of $\kappa$ is chosen to be 0.02.
-
-The loss history of the training is shown in Fig.~\ref{fig:loss}
-as a function of epoch number.
-The convergence is also shown in Fig.~\ref{fig:iterdiff}, which shows
-the difference in the value of the loss function with respect to the previous
-epoch. The epochs that triggered an increase in the number of hyperparameters
-are also overlaid.
-In total in this example, an increase was triggered 104 times. The total number
-of parameters in the final drone neural network is therefore 3233. It is interesting
-to note that with the algorithm design of Sec.~\ref{sec:dlearn}, the introduction
-of the new parameter space causes the drone network to learn faster, as evidenced by
-increases in Fig.~\ref{fig:iterdiff} with continuing descent of the loss function.
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.45\textwidth]{loss_history.pdf}
-\caption{\small 
-Convergence of the loss function during the drone training.
-}
-\label{fig:loss}
-\end{figure*}
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.45\textwidth]{diff_history.pdf}
-\caption{\small 
-Difference in the loss function with respect to the previous iteration. The green triangles
-depict the epoch number in which the number of hyperperameters was increased.
-}
-\label{fig:iterdiff}
-\end{figure*}
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.45\textwidth]{approx_vs_truth_diff.pdf}
-\caption{\small 
-Difference between the output response of the drone model with respect to
-the original classifier for data points in the test sample.
-}
-\label{fig:diff}
-\end{figure*}
-
-\subsection{Drone storage and transferability}
+\section{Drone storage and transferability and suitability
+for low-latency environments}
 \label{sec:storage}
 
-The hyperparameters and structure of the drone are required to be 
-portable and easily stored for later usage. For this the {\tt JSON} format was chosen as 
+The hyperparameters and structure of the drone are required to be
+portable and easily stored for later usage. For this the {\tt JSON} format was chosen as
 mediator. It is human-readable and easily accessible in the {\tt Python} and {\tt C++}
 environments commonly used in HEP. Thus, it is readily deployable in both personal and production environments.
 
-Provided is a tool to export and save a drone neural network to a {\tt JSON} 
-formatted file which preserves the input \& output structure, 
-the layers and nodes, all hyperparameters and activation functions. 
+Provided is a tool to export and save a drone neural network to a {\tt JSON}
+formatted file which preserves the input \& output structure,
+the layers and nodes, all hyperparameters and activation functions.
 The drone configuration is later read in by an equivalent tool into the production software framework,
-which then constructs a class object based on the Keras model. The {\tt C++} class implements 
+which then constructs a class object based on the Keras model. The {\tt C++} class implements
 a flexible member structure that is capable of completely reproducing the original drone. The production
-implementation may be used for all data reduction levels, be it in the form of the \lhcb high level trigger
-for example up to the latest stages of data handling and output. 
-This allows for the drones to be applied using a wide range of observables and event reconstruction properties. 
+implementation may be used for all data reduction levels, be it in the form of a low-latency trigger
+for example up to the latest stages of data handling and output.
+
+A major advantage of this method is that analysts and users have the full freedom of latest developments
+of industry standards, but need only to support a more manageable implementation in the low-latency
+software. This is further aided by projects such as ONNX~\cite{ONNX}, which enable classifiers from a wider
+range of software packages to be converted to a framework in which an approximation converter
+is available.
+
+The identical performance show in Fig.~\ref{fig:roc} is clearly the ideal scenario, even though
+such good agreement is not always required to give better results than other low-latency methods.
+However it is worth noting that the drones created in the examples of Sec.~\ref{sec:hep} are faster to
+evaluate. The comparison of the time taken for each model evaluation, determined from a desktop
+using a Intel Core i7-4770 processor is shown in Table~\ref{tab:comp}.
+\begin{table}[t]
+  \centering
+  \caption{Processing time comparisons of the original models and drone
+  approximations for the HEP examples. \label{tab:comp}}
+  \begin{tabular}{l|rr}
+                   & original model                  & drone \\
+    \hline
+    B decay        & $19.3 \pm 0.2 \times 10^{-5}$ s & $2.7 \pm 0.2 \times 10^{-5}$ s \\
+    jet separation & $25.2 \pm 0.2 \times 10^{-5}$ s & $2.9 \pm 0.2 \times 10^{-5}$ s \\
+  \end{tabular}
+\end{table}
 
 
 \section{Summary}
@@ -1419,9 +1427,10 @@ grant agreement No 676108.
 
 % This should be taken out in the final paper
 %\addcontentsline{toc}{section}{References}
-%\setboolean{inbibliography}{true}
-%\bibliographystyle{elsarticle-num}
-%\bibliography{main}
+\setboolean{inbibliography}{true}
+\bibliographystyle{elsarticle-num}
+\bibliography{main}
+\begin{comment}
 \begin{thebibliography}{10}
 \expandafter\ifx\csname url\endcsname\relax
   \def\url#1{\texttt{#1}}\fi
@@ -1504,5 +1513,6 @@ G.~A. Cowan, D.~C. Craik, M.~D. Needham, {RapidSim: an application for the fast
   {\path{doi:10.1016/j.cpc.2017.01.029}}.
 
 \end{thebibliography}
+\end{comment}
 
 \end{document}
