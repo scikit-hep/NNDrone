@@ -48,7 +48,7 @@ class BasicConverter(object):
             if keras_conv:
                 prob = base_model.predict_proba(np.expand_dims(np.expand_dims(b, axis = 2), axis = 0))[0][0]
             else:
-                prob = base_model.predict_proba(b)[0][0]
+                prob = base_model.predict_proba(b.reshape(1, -1))[0][0]
             b = b[0].flatten().tolist()
             refs.append(prob)
             flattened.append(b)

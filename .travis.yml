@@ -1,0 +1,11 @@
+install: true
+
+sudo: false
+
+language: python
+
+python:
+  - 3.4
+
+script:
+  - pytest
