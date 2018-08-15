@@ -114,9 +114,9 @@ def perform():
     diffs = converter.diffs()
     updates = converter.updates()
 
-    model.save_model('Models/approx_B_temp.pkl')
+    model.save_model('approx_B_temp.pkl')
 
-    f_train = open('Models/approx_B_temp.pkl', 'wb')
+    f_train = open('approx_B_temp.pkl', 'wb')
     training_data = [losses, diffs, updates]
     pickle.dump(training_data, f_train)
     f_train.close()
