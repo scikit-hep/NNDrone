@@ -8,6 +8,8 @@ Created on Mon Aug  7 17:44:42 2017
 # Demonstrator that model conversion works
 """
 import pytest
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 
 def perform():
     from sklearn.externals import joblib
