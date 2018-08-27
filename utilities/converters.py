@@ -37,37 +37,52 @@ class BasicConverter(object):
         pickle.dump(training_data, f_train)
         f_train.close()
 
-    def convert_model(self, drone_model, base_model, datapoints, scaler = None, keras_conv = False):
+    def convert_model(self, drone_model, base_model, datapoints, scaler = None, conv_1d = False, conv_2d = False):
         # Create the list of outputs for the base model
+        if conv_1d and conv_2d:
+            print('ERROR: conv_1d and conv_2d are mutually exclusive')
+            return None
         refs = []
         flattened = []
-        for b in datapoints:
-            if scaler:
-                b = scaler.transform([b])
+        for point in datapoints:
+            if scaler and not conv_2d:
+                point = scaler.transform([point])
             prob = 0.0
-            if keras_conv:
-                prob = base_model.predict_proba(np.expand_dims(np.expand_dims(b, axis = 2), axis = 0))[0][0]
+            if conv_1d:
+                prob = base_model.predict_proba(np.expand_dims(np.expand_dims(point, axis = 2), axis = 0))[0][0]
+            elif conv_2d:
+                # this will match if original model was trained with correct dimensionality
+                prob = base_model.predict_proba(point)
             else:
-                prob = base_model.predict_proba(b.reshape(1, -1))[0][0]
-            b = b[0].flatten().tolist()
+                prob = base_model.predict_proba(point.reshape(1, -1))[0][0]
+            if conv_2d:
+                point = point.flatten().tolist()
+            else:
+                point = point[0].flatten().tolist()
             refs.append(prob)
-            flattened.append(b)
+            flattened.append(point)
         inflate = 0  # to inflate the learning without change iterations
         q = 0
         avloss = 0
+        datapoints_for_drone = None
+        if conv_2d:
+            # BaseModel only accepts vector objects in N-D space
+            datapoints_for_drone = np.asarray([np.asarray(point.flatten()) for point in datapoints])
+        else:
+            datapoints_for_drone = datapoints
         # convert until min epochs are passed and leave only if loss at minima
         while (q < self._num_epochs) or (self._updatedLoss < avloss):
             # initialize the total loss for the epoch
             epochloss = []
 
             # loop over our data in batches
-            for (batchX, batchY) in next_batch(datapoints, refs, self._batchSize):
+            for (batchX, batchY) in next_batch(datapoints_for_drone, refs, self._batchSize):
                 if batchX.shape[0] != self._batchSize:
                     print('Batch size insufficient (%s), continuing...' % batchY.shape[0])
                     continue
 
                 # Find current output and calculate loss for our graph
-                preds = drone_model.evaluate_total(batchX, debug=False)
+                preds = drone_model.evaluate_total(batchX, debug = False)
                 loss, error = dot_loss(preds, batchY)
                 epochloss.append(loss)
 

@@ -3,6 +3,7 @@
 from argparse import ArgumentParser
 from sklearn.externals import joblib
 from sklearn.preprocessing import StandardScaler
+import pandas
 import numpy as np
 import math
 import sys
@@ -34,9 +35,9 @@ except ImportError:
 
 # Parse arguments
 parser = ArgumentParser(description = "Convert Keras model to a drone")
-parser.add_argument('-s', '--signal', action = 'store', default = '../data/signal_data.p',
+parser.add_argument('-s', '--signal', action = 'store', default = '../data/Jets/sig_centred_imaged.h5',
                     dest = 'signal', help = 'pickle file containing signal data.')
-parser.add_argument('-b', '--background', action = 'store', default = '../data/background_data.p',
+parser.add_argument('-b', '--background', action = 'store', default = '../data/Jets/bkg_centred_imaged.h5',
                     dest = 'background', help = 'pickle file containing background data.')
 subparsers  = parser.add_subparsers(description = 'Choose between providing a saved Keras model or generating a new one.',
                                     dest = 'subcommand')
@@ -53,30 +54,33 @@ batchSize = 128
 alpha = 0.05
 threshold = 0.01
 
-# load dataset
-sig_data = np.asarray(joblib.load(parser.signal))
-bkg_data = np.asarray(joblib.load(parser.background))
-
-# create the scaler and transform data to be Gaussian dist with mean at 0
-# important specifically for sigmoid fully connected net
-scaler = StandardScaler(copy = True, with_mean = True, with_std = True).fit(sig_data)
-sig_data = np.asarray(scaler.transform(sig_data))
-bkg_data = np.asarray(scaler.transform(bkg_data))
+# load dataset, should be already scaled and normalized
+sig_data = pandas.read_hdf(parser.signal)
+cet = np.asarray([np.asarray(i) for i in sig_data.charged_et_image])
+net = np.asarray([np.asarray(i) for i in sig_data.neutral_et_image])
+cmu = np.asarray([np.asarray(i) for i in sig_data.charged_multi_image])
+sig_img = np.asarray([np.asarray((x, y, z)) for x, y, z in zip(cet, net, cmu)])
+bkg_data = pandas.read_hdf(parser.background)
+cet = np.asarray([np.asarray(i) for i in bkg_data.charged_et_image])
+net = np.asarray([np.asarray(i) for i in bkg_data.neutral_et_image])
+cmu = np.asarray([np.asarray(i) for i in bkg_data.charged_multi_image])
+bkg_img = np.asarray([np.asarray((x, y, z)) for x, y, z in zip(cet, net, cmu)])
 
 # define split index for dataset
 trainFraction = 0.5
-cutIndex = int(trainFraction * len(sig_data))
+cutIndex_sig = int(trainFraction * len(sig_img))
+cutIndex_bkg = int(trainFraction * len(bkg_img))
 
-all_data = np.asarray(np.concatenate((sig_data, bkg_data)))
-setTrain = np.asarray(np.concatenate((sig_data[cutIndex:],bkg_data[:cutIndex])))
-setTest = np.asarray(np.concatenate((sig_data[:cutIndex],bkg_data[cutIndex:])))
+all_data = np.asarray(np.concatenate((sig_img, bkg_img)))
+setTrain = np.asarray(np.concatenate((sig_img[cutIndex_sig:],bkg_img[:cutIndex_bkg])))
+setTest = np.asarray(np.concatenate((sig_img[:cutIndex_sig],bkg_img[cutIndex_bkg:])))
 
 if len(setTrain) != len(setTest):
     print('WARNING: Training and testing sets have different sizes: (%s; %s)' % (len(setTrain), len(setTest)))
 
 # make labels for data
 labels = np.ones(len(setTrain))
-for i in range(cutIndex, len(setTrain)):
+for i in range(cutIndex_sig, len(setTrain)):
     labels[i] = 0.0  # conv nets don't like -1
 
 useSaved = True if args.subcommand == 'saved' else False
@@ -90,58 +94,57 @@ else:
     ## Make Keras model
     model = Sequential()
     ## 6 inputs mean either 20 combinations of 3 classes
-    model.add(LocallyConnected1D(filters = 20, kernel_size = 3, activation = 'sigmoid',
-                                 input_shape = (len(sig_data[0]), 1)))
-    # ## or 720 combinations of 2 classes
-    # model.add(LocallyConnected1D(filters = 720, kernel_size = 2, input_shape = (len(sig_data[0]), 1)))
-
+    model.add(Conv2D(filters = 32, kernel_size = (8, 8), activation = 'relu',
+                     input_shape = sig_img[0].shape, data_format = 'channels_first'))
     # reduce spacial size of convolutional output
-    # by non-linear downsampling to plug into
-    # a dense layer down the chain
-    model.add(GlobalMaxPooling1D())
-
+    # by non-linear downsampling
+    model.add(MaxPooling2D(pool_size = (2,2)))
+    # 2 conv layer iteration
+    model.add(Conv2D(filters = 32, kernel_size = (4, 4), activation = 'relu',
+                     input_shape = sig_img[0].shape, data_format = 'channels_first'))
+    model.add(MaxPooling2D(pool_size = (2,2)))
+    # 3 conv layer iteration
+    model.add(Conv2D(filters = 32, kernel_size = (4, 4), activation = 'relu',
+                     input_shape = sig_img[0].shape, data_format = 'channels_first'))
+    model.add(MaxPooling2D(pool_size = (2,2)))
     # match filter output number of conv layer
-    model.add(Dense(30, activation = 'sigmoid'))
-
+    model.add(Dense(128, activation = 'sigmoid'))
     # project onto 1 output
     model.add(Dense(1, activation = 'sigmoid'))
-
     # compile model
     model.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
-
-    history = model.fit(np.expand_dims(setTrain, axis = 2), labels, batch_size = batchSize,
-                        epochs = epochNum, validation_data = (np.expand_dims(setTest, axis = 2), labels))
-
-    scatter(range(0,300), history.history['loss'], [0, 300], [min(history.history['loss']),
+    # save history of training
+    history = model.fit(setTrain, labels, batch_size = batchSize, epochs = epochNum,
+                        validation_data = (setTest, labels))
+    # show plot
+    scatter(range(0, 300), history.history['loss'], [0, 300], [min(history.history['loss']),
             max(history.history['loss'])], 'Epoch', 'Loss', 'Training Loss', 'trainig_loss.pdf')
-
+    # save history
     joblib.dump(history.history, open('./keras_hist.pkl', 'wb'))
-
-    model.save('./keras_locallyconnected1d_for_drone.h5')
-
+    # save model
+    model.save('./keras_jet_conv2d_for_drone.h5')
 if not model:
+    # check if model does exist
     print('ERROR: Could not load or create Keras model. Exiting...')
     sys.exit(1)
-
 # get full keras response space on data
 refs = []
 flattened = []
 for point in all_data:
-    conv_point = np.expand_dims(np.expand_dims(point, axis = 2), axis = 0)
-    prob = model.predict_proba(conv_point)[0][0]
+    prob = model.predict_proba(point)[0][0]
     refs.append(prob)
     flattened.append(point)
 refs = np.asarray(refs)
-labels_ref = np.concatenate((np.ones(len(sig_data)), np.zeros(len(bkg_data))))
+labels_ref = np.concatenate((np.ones(len(sig_img)), np.zeros(len(bkg_img))))
 flattened = np.asarray(flattened)
 
 # create drone
-drone = BaseModel(len(sig_data[0]), 1)
-drone.add_layer(5)
+drone = BaseModel(len(sig_img[0].flatten()), 1)
+drone.add_layer(675)
 drone.add_layer(1)
 
 conv = BasicConverter(num_epochs = epochNum, threshold = threshold)
-drone = conv.convert_model(drone, model, all_data, conv_1d = True)
+drone = conv.convert_model(drone, model, all_data, conv_2d = True)
 conv.save_history('./converted_hist.pkl')
 
 drone.save_model('./converted_drone.pkl')
@@ -155,7 +158,7 @@ for point in all_data:
     refs_drone.append(prob)
     flattened_drone.append(point)
 refs_drone = np.asarray(refs_drone)
-labels_drone = np.concatenate((np.ones(len(sig_data)), np.zeros(len(bkg_data))))
+labels_drone = np.concatenate((np.ones(len(sig_img)), np.zeros(len(bkg_img))))
 flattened_drone = np.asarray(flattened_drone)
 
 joblib.dump(refs, open('./response_keras.pkl', 'wb'))
