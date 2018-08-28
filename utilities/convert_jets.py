@@ -8,6 +8,7 @@ import sys
 
 from keras.layers import Conv2D, MaxPooling2D, Dense, Activation
 from keras.models import load_model, Sequential
+from keras.callbacks import EarlyStopping
 
 import matplotlib.pyplot as plt
 
@@ -133,28 +134,33 @@ else:
     ## Make Keras model
     model = Sequential()
     ## 6 inputs mean either 20 combinations of 3 classes
-    model.add(Conv2D(filters = 32, kernel_size = (8, 8), activation = 'relu',
+    model.add(Conv2D(filters = 32, kernel_size = (3, 3), activation = 'relu',
                      input_shape = sig_img[0].shape, data_format = 'channels_first'))
     # reduce spacial size of convolutional output
     # by non-linear downsampling
-    model.add(MaxPooling2D(pool_size = (2,2)))
+    model.add(MaxPooling2D(pool_size = (2,2), strides = 1))
+    # add loss by dropout
+    model.add(Dropout(0.25))
     # 2 conv layer iteration
-    model.add(Conv2D(filters = 32, kernel_size = (4, 4), activation = 'relu',
-                     input_shape = sig_img[0].shape, data_format = 'channels_first'))
-    model.add(MaxPooling2D(pool_size = (2,2)))
+    model.add(Conv2D(filters = 32, kernel_size = (2, 2), activation = 'relu'))
+    model.add(MaxPooling2D(pool_size = (2,2), strides = 2))
+    model.add(Dropout(0.5))
     # 3 conv layer iteration
-    model.add(Conv2D(filters = 32, kernel_size = (4, 4), activation = 'relu',
-                     input_shape = sig_img[0].shape, data_format = 'channels_first'))
-    model.add(MaxPooling2D(pool_size = (2,2)))
-    # match filter output number of conv layer
-    model.add(Dense(128, activation = 'sigmoid'))
+    model.add(Conv2D(filters = 32, kernel_size = (2, 2), activation = 'relu'))
+    model.add(MaxPooling2D(pool_size = (2,2), strides = 2))
+    model.add(Dropout(0.5))
+    # flatten to feed into dense layer
+    model.add(Flatten())
+    # begin down-transform for final response
+    model.add(Dense(50, activation = 'relu'))
     # project onto 1 output
     model.add(Dense(1, activation = 'sigmoid'))
     # compile model
     model.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+    earlystop = EarlyStopping(patience = 3)
     # save history of training
     history = model.fit(setTrain, labels, batch_size = batchSize, epochs = epochNum,
-                        validation_data = (setTest, labels))
+                        validation_data = (setTest, labels), callbacks = [earlystop])
     # show plot
     scatter(range(0, 300), history.history['loss'], [0, 300], [min(history.history['loss']),
             max(history.history['loss'])], 'Epoch', 'Loss', 'Training Loss', 'trainig_loss.pdf')
