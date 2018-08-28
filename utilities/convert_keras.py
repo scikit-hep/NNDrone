@@ -4,7 +4,6 @@ from argparse import ArgumentParser
 from sklearn.externals import joblib
 from sklearn.preprocessing import StandardScaler
 import numpy as np
-import math
 import sys
 
 from keras.layers import Conv1D, LocallyConnected1D, Dense, Activation, GlobalMaxPooling1D

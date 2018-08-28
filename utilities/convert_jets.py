@@ -2,13 +2,11 @@
 
 from argparse import ArgumentParser
 from sklearn.externals import joblib
-from sklearn.preprocessing import StandardScaler
 import pandas
 import numpy as np
-import math
 import sys
 
-from keras.layers import Conv1D, LocallyConnected1D, Dense, Activation, GlobalMaxPooling1D
+from keras.layers import Conv2D, MaxPooling2D, Dense, Activation
 from keras.models import load_model, Sequential
 
 import matplotlib.pyplot as plt
@@ -44,6 +42,12 @@ parser.add_argument('-s', '--signal', action = 'store', default = '../data/Jets/
                     dest = 'signal', help = 'pickle file containing signal data.')
 parser.add_argument('-b', '--background', action = 'store', default = '../data/Jets/bkg_centred_imaged.h5',
                     dest = 'background', help = 'pickle file containing background data.')
+parser.add_argument('-f', '--fully-processed', action = 'store_true', dest = 'processed',
+                    help = 'Use when images do not need to be processed for symmetries.')
+parser.add_argument('-n', '--numpy-format', action = 'store_true', dest = 'np_format',
+                    help = 'Use when data is stored in prepared NumPy pickle files.')
+parser.add_argument('-d', '--dump-processed', action = 'store_true', dest = 'dump_processed',
+                    help = 'Dump processed signal and background to files (derived from input filename).')
 subparsers  = parser.add_subparsers(description = 'Choose between providing a saved Keras model or generating a new one.',
                                     dest = 'subcommand')
 subparsers.required = True
@@ -52,6 +56,8 @@ parser_new   = subparsers.add_parser('new')
 parser_saved.add_argument('keras_file', metavar = 'keras', action = 'store', default = 'keras_model.h5',
                           help = 'File location for saved Keras model (H5 format).')
 args = parser.parse_args()
+if args.processed and args.dump_processed:
+    raise argparse.ArgumentError('Given data is already fully processed, nothing to dump.')
 
 # define constants
 epochNum = 1500
@@ -60,22 +66,44 @@ alpha = 0.05
 threshold = 0.01
 
 # load dataset, should be already scaled and normalized
-sig_data = pandas.read_hdf(parser.signal)
-cet = np.asarray([np.asarray(i) for i in sig_data.charged_et_image])
-cet = impose_symmetry(cet)
-net = np.asarray([np.asarray(i) for i in sig_data.neutral_et_image])
-net = impose_symmetry(net)
-cmu = np.asarray([np.asarray(i) for i in sig_data.charged_multi_image])
-cmu = impose_symmetry(cmu)
-sig_img = np.asarray([np.asarray((x, y, z)) for x, y, z in zip(cet, net, cmu)])
-bkg_data = pandas.read_hdf(parser.background)
-cet = np.asarray([np.asarray(i) for i in bkg_data.charged_et_image])
-cet = impose_symmetry(cet)
-net = np.asarray([np.asarray(i) for i in bkg_data.neutral_et_image])
-net = impose_symmetry(net)
-cmu = np.asarray([np.asarray(i) for i in bkg_data.charged_multi_image])
-cmu = impose_symmetry(cmu)
-bkg_img = np.asarray([np.asarray((x, y, z)) for x, y, z in zip(cet, net, cmu)])
+sig_data = None
+sig_img = None
+bkg_data = None
+sig_img = None
+if not args.np_format:
+    try:
+        sig_data = pandas.read_hdf(parser.signal)
+    except ValueError as e:
+        sig_data = pandas.read_hdf(parser.signal, key = 'table')
+    try:
+        bkg_data = pandas.read_hdf(parser.background)
+    except ValueError as e:
+        bkg_data = pandas.read_hdf(parser.background, key = 'table')
+else:
+    sig_data = joblib.load(parser.signal)
+    bkg_data = joblib.load(parser.background)
+if not args.processed:
+    if args.np_format:
+        # not implemented
+        raise argparse.ArgumentError('Functionality not yet implementated.')
+    else:
+        cet = np.asarray([np.asarray(i) for i in sig_data.charged_et_image])
+        cet = impose_symmetry(cet)
+        net = np.asarray([np.asarray(i) for i in sig_data.neutral_et_image])
+        net = impose_symmetry(net)
+        cmu = np.asarray([np.asarray(i) for i in sig_data.charged_multi_image])
+        cmu = impose_symmetry(cmu)
+        sig_img = np.asarray([np.asarray((x, y, z)) for x, y, z in zip(cet, net, cmu)])
+        cet = np.asarray([np.asarray(i) for i in bkg_data.charged_et_image])
+        cet = impose_symmetry(cet)
+        net = np.asarray([np.asarray(i) for i in bkg_data.neutral_et_image])
+        net = impose_symmetry(net)
+        cmu = np.asarray([np.asarray(i) for i in bkg_data.charged_multi_image])
+        cmu = impose_symmetry(cmu)
+        bkg_img = np.asarray([np.asarray((x, y, z)) for x, y, z in zip(cet, net, cmu)])
+else:
+    sig_img = np.asarray(sig_data)
+    bkg_img = np.asarray(bkg_data)
 
 # define split index for dataset
 trainFraction = 0.5
