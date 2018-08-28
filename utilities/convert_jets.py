@@ -33,6 +33,11 @@ try:
 except ImportError:
     from utilities.converters import BasicConverter
 
+try:
+    from preprocessing import impose_symmetry
+except ImportError:
+    from utilities.preprocessing import impose_symmetry
+
 # Parse arguments
 parser = ArgumentParser(description = "Convert Keras model to a drone")
 parser.add_argument('-s', '--signal', action = 'store', default = '../data/Jets/sig_centred_imaged.h5',
@@ -57,13 +62,19 @@ threshold = 0.01
 # load dataset, should be already scaled and normalized
 sig_data = pandas.read_hdf(parser.signal)
 cet = np.asarray([np.asarray(i) for i in sig_data.charged_et_image])
+cet = impose_symmetry(cet)
 net = np.asarray([np.asarray(i) for i in sig_data.neutral_et_image])
+net = impose_symmetry(net)
 cmu = np.asarray([np.asarray(i) for i in sig_data.charged_multi_image])
+cmu = impose_symmetry(cmu)
 sig_img = np.asarray([np.asarray((x, y, z)) for x, y, z in zip(cet, net, cmu)])
 bkg_data = pandas.read_hdf(parser.background)
 cet = np.asarray([np.asarray(i) for i in bkg_data.charged_et_image])
+cet = impose_symmetry(cet)
 net = np.asarray([np.asarray(i) for i in bkg_data.neutral_et_image])
+net = impose_symmetry(net)
 cmu = np.asarray([np.asarray(i) for i in bkg_data.charged_multi_image])
+cmu = impose_symmetry(cmu)
 bkg_img = np.asarray([np.asarray((x, y, z)) for x, y, z in zip(cet, net, cmu)])
 
 # define split index for dataset

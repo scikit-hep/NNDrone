@@ -408,3 +408,30 @@ def standardize_images(images, fudge_factor = 1e-4, _dtype = 'float64'):
             _image[index] = (_image[index] - means[pix]) / (stdevs[pix] + fudge_factor)
         _images.append(_image)
     return np.asarray(_images, dtype = _dtype)
+
+
+def impose_symmetry(images, _dtype = 'float64'):
+    '''
+    for each image, produce its three reflections
+    (horizontal, vertical, horizontal + vertical)
+    and its four 1-pixel translations (horizontal
+    + vertical)
+    '''
+    _images = []
+    for image in images:
+        _updown = np.flipud(image)
+        _leftright = np.fliplr(image)
+        _udlr = np.fliplr(_updown)
+        _downroll = np.roll(image, 1, axis = 0)
+        _uproll = np.roll(image, -1, axis = 0)
+        _rightroll = np.roll(image, 1, axis = 1)
+        _leftroll = np.roll(image, -1, axis = 1)
+        _images.append(np.copy(np.asarray(image, dtype = _dtype)))
+        _images.append(np.asarray(_updown, dtype = _dtype))
+        _images.append(np.asarray(_leftright, dtype = _dtype))
+        _images.append(np.asarray(_udlr, dtype = _dtype))
+        _images.append(np.asarray(_downroll, dtype = _dtype))
+        _images.append(np.asarray(_uproll, dtype = _dtype))
+        _images.append(np.asarray(_rightroll, dtype = _dtype))
+        _images.append(np.asarray(_leftroll, dtype = _dtype))
+    return np.asarray(_images, dtype = _dtype)
