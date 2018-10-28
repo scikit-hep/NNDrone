@@ -2,4 +2,4 @@
 *.pkl 		binary
 *.pyc 		binary
 *.pyo 		binary
-*.tex 		binary
+*.tex 		linguist-vendored
