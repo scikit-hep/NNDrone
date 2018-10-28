@@ -1,0 +1,7 @@
+*.py 		text
+*.pyx  		text
+
+*.p 		binary
+*.pkl 		binary
+*.pyc 		binary
+*.pyo 		binary
