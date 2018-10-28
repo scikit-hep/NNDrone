@@ -5,3 +5,4 @@
 *.pkl 		binary
 *.pyc 		binary
 *.pyo 		binary
+*.tex 		binary
