@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-   name='HEPDrone',
+   name='NNDrone',
    version='1.0',
    description='ML drone creation',
    author='Sean Benson, Konstantin Gizdov',

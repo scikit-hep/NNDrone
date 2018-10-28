@@ -1,8 +1,8 @@
-# HEPDrone: A collection of tools and algorithms to enable conversion of HEP ML to mass usage model.
+# NNDrone: A collection of tools and algorithms to enable conversion of HEP ML to mass usage model.
 
 Machine learning has proven to be an indispensable tool in the selection of interesting events in high energy physics.
 Such technologies will become increasingly important as detector upgrades are introduced and data
-rates increase by orders of magnitude. HEPDrone is a toolkit to enable the creation of a drone
+rates increase by orders of magnitude. NNDrone is a toolkit to enable the creation of a drone
 classifier from any machine learning classifier, such that different classifiers may be standardised
 into a single form and executed in parallel. In the package, we demonstrate the capability of the drone neural
 network to learn the required properties of the input neural network without the use of any training data,

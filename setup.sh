@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
 PWD=$(pwd)
-export HEPDRONEHOME=${PWD} # Location of the package
-export PYTHONPATH=${HEPDRONEHOME}:${PYTHONPATH}
+export NNDRONEHOME=${PWD} # Location of the package
+export PYTHONPATH=${NNDRONEHOME}:${PYTHONPATH}
