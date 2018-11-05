@@ -34,3 +34,5 @@ With your MLP from SkLearn or Keras created, making a drone is as simple as
   converter = BasicConverter(num_epochs=num_epochs, batch_size=batchSize, alpha=alpha, threshold=threshold)
   converter.convert_model(model, classifier, data)
 ```
+where `data` is a 2D NumPy array of width num. features and arbitrary length, and `classifier` is the
+original network to be converted.
