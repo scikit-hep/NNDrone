@@ -23,7 +23,7 @@ except ImportError:
 try:
     from models import BaseModel as Model
 except ImportError:
-    from models.models import BaseModel as Model
+    from NNdrone.models import BaseModel as Model
 
 # DATASET LOADING ***************************************************************
 totalDataSig = []

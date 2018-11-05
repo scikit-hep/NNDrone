@@ -60,7 +60,7 @@ from sklearn.externals import joblib
 try:
     from models import BaseModel as Model
 except ImportError:
-    from models.models import BaseModel as Model
+    from NNdrone.models import BaseModel as Model
 
 class BASE2JSON(object):
     '''Class to convert BaseModel model to JSON format for Keras with lwtnn'''

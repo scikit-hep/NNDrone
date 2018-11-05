@@ -25,12 +25,12 @@ except ImportError:
 try:
     from models import BaseModel
 except ImportError:
-    from models.models import BaseModel
+    from NNdrone.models import BaseModel
 
 try:
     from converters import BasicConverter
 except ImportError:
-    from utilities.converters import BasicConverter
+    from NNdrone.converters import BasicConverter
 
 try:
     from preprocessing import impose_symmetry
