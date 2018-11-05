@@ -8,6 +8,14 @@ into a single form and executed in parallel. In the package, we demonstrate the 
 network to learn the required properties of the input neural network without the use of any training data,
 only using appropriate questioning of the input neural network - https://arxiv.org/abs/1712.09114
 
+## Original training
+
+To demonstrate the toolkit:
+1) We create simulated HEP data from the RapidSim package (https://arxiv.org/abs/1612.07489)
+2) We train a neural network using SciKit-Learn
+3) We train a drone to learn the features
+4) We export this to the equivalent coding in the production environment using JSON
+
 ## Dependencies
 ### Strict
 - NumPy
@@ -16,10 +24,12 @@ only using appropriate questioning of the input neural network - https://arxiv.o
 - SciPy
 - MatPlotLib
 
-## Original training
+## Getting started
+With your MLP from SkLearn or Keras created, making a drone is as simple as
 
-To demonstrate the toolkit:
-1) We create simulated HEP data from the RapidSim package (https://arxiv.org/abs/1612.07489)
-2) We train a neural network using SciKit-Learn
-3) We train a drone to learn the features
-4) We export this to the equivalent coding in the production environment using JSON
+.. code-block:: python
+  from NNdrone.converters import BasicConverter
+  from NNdrone.models import BaseModel as Model
+  model = Model(len(data[0]), 1)
+  converter = BasicConverter(num_epochs=num_epochs, batch_size=batchSize, alpha=alpha, threshold=threshold)
+  converter.convert_model(model, classifier, data)
