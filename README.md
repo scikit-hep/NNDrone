@@ -27,9 +27,10 @@ To demonstrate the toolkit:
 ## Getting started
 With your MLP from SkLearn or Keras created, making a drone is as simple as
 
-.. code-block:: python
+```
   from NNdrone.converters import BasicConverter
   from NNdrone.models import BaseModel as Model
   model = Model(len(data[0]), 1)
   converter = BasicConverter(num_epochs=num_epochs, batch_size=batchSize, alpha=alpha, threshold=threshold)
   converter.convert_model(model, classifier, data)
+```
