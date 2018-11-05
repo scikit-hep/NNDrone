@@ -8,6 +8,14 @@ into a single form and executed in parallel. In the package, we demonstrate the 
 network to learn the required properties of the input neural network without the use of any training data,
 only using appropriate questioning of the input neural network - https://arxiv.org/abs/1712.09114
 
+## Dependencies
+### Strict
+- NumPy
+- SkLearn and or Keras
+### Useful
+- SciPy
+- MatPlotLib
+
 ## Original training
 
 To demonstrate the toolkit:
