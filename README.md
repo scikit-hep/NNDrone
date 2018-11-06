@@ -1,3 +1,5 @@
+https://travis-ci.com/Tevien/NNDrone.svg?branch=master
+
 # NNDrone: A collection of tools and algorithms to enable conversion of HEP ML to mass usage model.
 
 Machine learning has proven to be an indispensable tool in the selection of interesting events in high energy physics.
