@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/Tevien/NNDrone.svg?branch=master)
+![Build Status](https://travis-ci.com/Tevien/NNDrone.svg?branch=master)
 
 # NNDrone: A collection of tools and algorithms to enable conversion of HEP ML to mass usage model.
 
