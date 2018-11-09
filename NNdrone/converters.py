@@ -52,7 +52,7 @@ class BasicConverter(object):
                 prob = base_model.predict_proba(np.expand_dims(np.expand_dims(point, axis = 2), axis = 0))[0][0]
             elif conv_2d:
                 # this will match if original model was trained with correct dimensionality
-                prob = base_model.predict_proba(point)
+                prob = base_model.predict_proba(np.expand_dims(point, axis = 0))
             else:
                 prob = base_model.predict_proba(point.reshape(1, -1))[0][0]
             if conv_2d:
