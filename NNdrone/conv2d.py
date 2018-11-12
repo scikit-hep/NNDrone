@@ -47,13 +47,13 @@ def transform_as_needed(inpt, fltr, mode = 'full', pad_mode = 'fill', fillval = 
 
 def conv2d(inpt, fltr, mode = 'full', pad_mode = 'fill', fillval = 0, strides = (1, 1)):
     inpt = np.asarray(inpt)
-    fltr = np.flip(np.asarray(fltr), (0, 1))  # flip kernel as per def
+    fltr = np.flip(np.asarray(fltr))  # flip kernel as per definition
     if inpt.ndim != 2 or fltr.ndim != 2:
         raise ValueError('Input and filter must be 2-D arrays')
     if np.ndim(strides) > 1:
         raise ValueError('Valid strides are single integer or tuple/list of dimension 1')
     inpt, fltr = transform_as_needed(inpt, fltr, mode, pad_mode, fillval)
-    subshp = fltr.shape + tuple(np.subtract(inpt.shape, fltr.shape) + 1)
+    subshp = fltr.shape + tuple(np.subtract(inpt.shape, fltr.shape) + 1)  # order of summation important
     strd = np.lib.stride_tricks.as_strided
     subM = strd(inpt, shape = subshp, strides = inpt.strides * 2)
     if np.ndim(strides) == 0:
