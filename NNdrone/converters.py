@@ -77,6 +77,7 @@ class BasicConverter(object):
 
             # loop over our data in batches
             for (batchX, batchY) in next_batch(datapoints_for_drone, refs, self._batchSize):
+                batchY=np.array(batchY)
                 if batchX.shape[0] != self._batchSize:
                     print('Batch size insufficient (%s), continuing...' % batchY.shape[0])
                     continue
