@@ -9,33 +9,39 @@ except ImportError:
 
 
 class BasicConverter(object):
-    def __init__(self, alpha = 0.05, batch_size = 1, num_epochs = 300, threshold = 0.02, add_layer_dynamic = False):
+    def __init__(self, alpha = 0.05, batch_size = 1, num_epochs = 300, threshold = 0.02, add_layer_dynamic = False, layer_to_expand = 0):
         # training control
         self._alpha = alpha
         self._batchSize = batch_size
         self._num_epochs = num_epochs
         self._threshold = threshold
         self._add_layer_dynamic = add_layer_dynamic
+        self._layer_to_expand = int(layer_to_expand)
         # training history
         self._updatedLoss = 1000.0
         self._diffs = []
         self._losses = []
         self._updates = []
 
+
     def losses(self):
         return self._losses
+
 
     def diffs(self):
         return self._diffs
 
+
     def updates(self):
         return self._updates
+
 
     def save_history(self, fname):
         f_train = open(fname, 'wb')
         training_data = [self._losses, self._diffs, self._updates]
         pickle.dump(training_data, f_train)
         f_train.close()
+
 
     def convert_model(self, drone_model, base_model, datapoints, scaler = None, conv_1d = False, conv_2d = False):
         # Create the list of outputs for the base model
@@ -119,7 +125,7 @@ class BasicConverter(object):
                     if self._add_layer_dynamic:
                         drone_model.add_layer_dynamic()
                     else:
-                        drone_model.expand_layer_dynamic(0)
+                        drone_model.expand_layer_dynamic(self._layer_to_expand)
                     print('Model structure is now:')
                     drone_model.print_layers()
                 self._updates.append(update)

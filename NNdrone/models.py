@@ -13,6 +13,7 @@ class BaseModel(object):
         self._layers = [] if layers is None else layers
         self._initialiser = initialiser
 
+
     def add_layer(self, outsize):
         # find last layer size
         insize = self._n_features
@@ -28,6 +29,7 @@ class BaseModel(object):
 
         self._layers.append(layer)
 
+
     def eval_layer(self, act, lay, debug=False):
         layer = self._layers[lay]
         if debug:
@@ -42,6 +44,7 @@ class BaseModel(object):
             print('Output act:')
             print(act)
         return act
+
 
     def evaluate_total(self, in_data, debug=False):
         if hasattr(in_data[0], '__iter__'):
@@ -62,11 +65,13 @@ class BaseModel(object):
                 print(in_mat)
         return in_mat
 
+
     def print_layers(self):
         for c, layer in enumerate(self._layers):
             print('Layer %s' % (c+1))
             print('Weights matrix shape: (%s,%s)' % (layer['weight'].shape[0], layer['weight'].shape[1]))
             print('Bias vector shape (%s,%s)' % (layer['bias'].shape[0], layer['bias'].shape[1]))
+
 
     def backprop(self, x, y):
         nabla_b = []
@@ -133,6 +138,7 @@ class BaseModel(object):
 
         return nabla_b, nabla_w
 
+
     def update(self, in_data_x, in_data_y, l_rate):
         nabla_b = []
         nabla_w = []
@@ -149,6 +155,7 @@ class BaseModel(object):
         for c, layer in enumerate(self._layers):
             layer['bias'] = layer['bias'] - np.multiply(l_rate/len(in_data_x), nabla_b[c])
             layer['weight'] = layer['weight'] - np.multiply(l_rate/len(in_data_x), nabla_w[c])
+
 
     def add_layer_dynamic(self):
         # Add identity layer to the second to last layer
@@ -170,6 +177,7 @@ class BaseModel(object):
 
         self._layers.insert(len(self._layers)-1, layer)
 
+
     def expand_layer_dynamic(self, layer):
         # Pad with zeros to give some more freedom to
         # an intermediate layer.
@@ -181,14 +189,16 @@ class BaseModel(object):
         # m in n out
         # layer -> m in, n+1 out
         # layer+1 -> m+1 in, n out
-        self._layers[layer]['weight']     = np.pad(_layer['weight'], [(0, 1), (0, 0)], mode='constant', constant_values=0)
-        self._layers[layer]['bias']       = np.pad(_layer['bias'], [(0, 1), (0, 0)], mode='constant', constant_values=0)
-        self._layers[layer + 1]['weight'] = np.pad(_layer_p1['weight'], [(0, 0), (0, 1)], mode='constant', constant_values=0)
+        self._layers[layer]['weight']     = np.pad(_layer['weight'], [(0, 1), (0, 0)], mode = 'constant', constant_values = 0)
+        self._layers[layer]['bias']       = np.pad(_layer['bias'], [(0, 1), (0, 0)], mode = 'constant', constant_values = 0)
+        self._layers[layer + 1]['weight'] = np.pad(_layer_p1['weight'], [(0, 0), (0, 1)], mode = 'constant', constant_values = 0)
+
 
     def save_model(self, output_name):
         f_out = open(output_name, 'wb')
         pickle.dump(self, f_out)
         f_out.close()
+
 
     def load_model(self, input_name):
         _model = pickle.load(open(input_name, 'rb'))
