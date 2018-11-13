@@ -7,10 +7,10 @@ import numpy as np
 
 
 class BaseModel(object):
-    def __init__(self, n_features, n_outputs, layers = [], initialiser = None):
+    def __init__(self, n_features, n_outputs, layers = None, initialiser = None):
         self._n_features = n_features
         self._n_outputs = n_outputs
-        self._layers = layers
+        self._layers = [] if layers is None else layers
         self._initialiser = initialiser
 
     def add_layer(self, outsize):

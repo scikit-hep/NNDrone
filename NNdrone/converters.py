@@ -45,22 +45,23 @@ class BasicConverter(object):
         refs = []
         flattened = []
         for point in datapoints:
+            spoint = point
             if scaler and not conv_2d:
                 point = scaler.transform([point])
             prob = 0.0
             if conv_1d:
-                prob = base_model.predict_proba(np.expand_dims(np.expand_dims(point, axis = 2), axis = 0))[0][0]
+                prob = base_model.predict_proba(np.expand_dims(np.expand_dims(spoint, axis = 2), axis = 0))[0][0]
             elif conv_2d:
                 # this will match if original model was trained with correct dimensionality
-                prob = base_model.predict_proba(np.expand_dims(point, axis = 0))
+                prob = base_model.predict_proba(np.expand_dims(spoint, axis = 0))
             else:
-                prob = base_model.predict_proba(point.reshape(1, -1))[0][0]
+                prob = base_model.predict_proba(spoint.reshape(1, -1))[0][0]
             if conv_2d:
-                point = point.flatten().tolist()
+                spoint = spoint.flatten().tolist()
             else:
-                point = point[0].flatten().tolist()
+                spoint = spoint[0].flatten().tolist()
             refs.append(prob)
-            flattened.append(point)
+            flattened.append(spoint)
         inflate = 0  # to inflate the learning without change iterations
         q = 0
         avloss = 0
@@ -77,7 +78,7 @@ class BasicConverter(object):
 
             # loop over our data in batches
             for (batchX, batchY) in next_batch(datapoints_for_drone, refs, self._batchSize):
-                batchY=np.array(batchY)
+                batchY = np.array(batchY)
                 if batchX.shape[0] != self._batchSize:
                     print('Batch size insufficient (%s), continuing...' % batchY.shape[0])
                     continue
