@@ -85,7 +85,7 @@ def perform():
     # layerSizes = [300, 1]
     layerSizes = [5, 1]
 
-    converter = BasicConverter(num_epochs=num_epochs, batch_size=batchSize, alpha=alpha, threshold=threshold)
+    converter = BasicConverter(num_epochs=num_epochs, batch_size=batchSize, learning_rate=alpha, threshold=threshold)
 
     train = totalDataSig+totalDataBkg
     datasize = len(train)
@@ -120,7 +120,7 @@ def perform():
     training_data = [losses, diffs, updates]
     pickle.dump(training_data, f_train)
     f_train.close()
-    
+
     # See how the sample performs on the test
     testDataSig = []
     testDataBkg = []
@@ -157,7 +157,7 @@ def perform():
 
         comp_preds.extend(output.T)
         comp_true.extend(batchY)
-    
+
     acc = round(1.0-(np.mean(np.array(comp_preds)-np.array(comp_true))), 2)
     print("Accuracy = %.2f" % (1.0-(np.mean(np.array(comp_preds)-np.array(comp_true)))))
     return acc

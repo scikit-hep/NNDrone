@@ -33,7 +33,7 @@ With your MLP from SkLearn or Keras created, making a drone is as simple as
   from NNdrone.converters import BasicConverter
   from NNdrone.models import BaseModel as Model
   model = Model(len(data[0]), 1)
-  converter = BasicConverter(num_epochs=num_epochs, batch_size=batchSize, alpha=alpha, threshold=threshold)
+  converter = BasicConverter(num_epochs=num_epochs, batch_size=batchSize, learning_rate=alpha, threshold=threshold)
   converter.convert_model(model, classifier, data)
 ```
 where `data` is a 2D NumPy array of width num. features and arbitrary length, and `classifier` is the
