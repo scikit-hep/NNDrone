@@ -2,7 +2,7 @@ import numpy as np
 try:
     from layer import Layer
 except:
-    from NNdrone.layers.layer import Layer
+    from nndrone.layers.layer import Layer
 
 class Flatten(Layer):
     def __init__(self, input_shape = None):

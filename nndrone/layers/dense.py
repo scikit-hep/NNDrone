@@ -2,7 +2,7 @@ import numpy as np
 try:
     from layer import Layer
 except:
-    from NNdrone.layers.layer import Layer
+    from nndrone.layers.layer import Layer
 
 class Dense(Layer):
     def __init__(self, n_filters, activation = None, input_shape = None, initialiser = None, use_bias = True):

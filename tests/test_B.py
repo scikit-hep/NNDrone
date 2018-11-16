@@ -17,8 +17,8 @@ def perform():
     import numpy as np
     import math
     from utilities.utilities import dot_loss, next_batch
-    from NNdrone.converters import BasicConverter
-    from NNdrone.models import BaseModel as Model
+    from nndrone.converters import BasicConverter
+    from nndrone.models import BaseModel as Model
     import pickle
 
     # DATASET LOADING ***************************************************************

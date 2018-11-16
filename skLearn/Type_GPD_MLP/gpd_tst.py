@@ -23,7 +23,7 @@ except ImportError:
 try:
     from models import BaseModel as Model
 except ImportError:
-    from NNdrone.models import BaseModel as Model
+    from nndrone.models import BaseModel as Model
 from utilities.utilities import scanPoint
 
 

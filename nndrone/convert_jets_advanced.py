@@ -12,12 +12,12 @@ from keras.callbacks import EarlyStopping
 
 import matplotlib.pyplot as plt
 
-from NNdrone.models import AdvancedModel
-from NNdrone.layers.conv2d import Conv2D
-from NNdrone.layers.maxpool2d import MaxPool2D
-from NNdrone.layers.flatten import Flatten
-from NNdrone.layers.dense import Dense
-from NNdrone.activations import relu, sigmoid
+from nndrone.models import AdvancedModel
+from nndrone.layers.conv2d import Conv2D
+from nndrone.layers.maxpool2d import MaxPool2D
+from nndrone.layers.flatten import Flatten
+from nndrone.layers.dense import Dense
+from nndrone.activations import relu, sigmoid
 
 try:
     from plotting import hd_hist, scatter
@@ -32,12 +32,12 @@ except ImportError:
 try:
     from models import BaseModel
 except ImportError:
-    from NNdrone.models import BaseModel
+    from nndrone.models import BaseModel
 
 try:
     from converters import AdvancedConverter
 except ImportError:
-    from NNdrone.converters import AdvancedConverter
+    from nndrone.converters import AdvancedConverter
 
 try:
     from preprocessing import impose_symmetry

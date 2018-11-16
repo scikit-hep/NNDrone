@@ -8,7 +8,7 @@ except ImportError:
 try:
     from activations import cross_entropy
 except ImportError:
-    from NNdrone.activations import cross_entropy
+    from nndrone.activations import cross_entropy
 
 class BaseModel(object):
     def __init__(self, n_features, n_outputs, layers = None, initialiser = None):

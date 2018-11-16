@@ -2,7 +2,7 @@ import numpy as np
 try:
     from layer import Layer
 except:
-    from NNdrone.layers.layer import Layer
+    from nndrone.layers.layer import Layer
 
 class Conv2D(Layer):
     def __init__(self, n_filters, kernel_size, activation = None, initialiser = None, strides = (1, 1), mode = 'full', pad_mode = 'fill', fillval = 0, input_shape = None, data_format = 'channels_last', use_bias = True):
