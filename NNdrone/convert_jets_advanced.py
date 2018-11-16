@@ -6,11 +6,18 @@ import pandas
 import numpy as np
 import sys
 
-from keras.layers import Conv2D, MaxPooling2D, Dense, Activation
+from keras.layers import Conv2D as KConv2D, MaxPooling2D as KMaxPooling2D, Dense as KDesne, Activation as KActivation
 from keras.models import load_model, Sequential
 from keras.callbacks import EarlyStopping
 
 import matplotlib.pyplot as plt
+
+from NNdrone.models import AdvancedModel
+from NNdrone.layers.conv2d import Conv2D
+from NNdrone.layers.maxpool2d import MaxPool2D
+from NNdrone.layers.flatten import Flatten
+from NNdrone.layers.dense import Dense
+from NNdrone.activations import relu, sigmoid
 
 try:
     from plotting import hd_hist, scatter
@@ -28,9 +35,9 @@ except ImportError:
     from NNdrone.models import BaseModel
 
 try:
-    from converters import BasicConverter
+    from converters import AdvancedConverter
 except ImportError:
-    from NNdrone.converters import BasicConverter
+    from NNdrone.converters import AdvancedConverter
 
 try:
     from preprocessing import impose_symmetry
@@ -134,27 +141,27 @@ else:
     ## Make Keras model
     model = Sequential()
     ## 6 inputs mean either 20 combinations of 3 classes
-    model.add(Conv2D(filters = 32, kernel_size = (3, 3), activation = 'relu',
+    model.add(KConv2D(filters = 32, kernel_size = (3, 3), activation = 'relu',
                      input_shape = sig_img[0].shape, data_format = 'channels_first'))
     # reduce spacial size of convolutional output
     # by non-linear downsampling
-    model.add(MaxPooling2D(pool_size = (2,2), strides = 1))
+    model.add(KMaxPooling2D(pool_size = (2,2), strides = 1))
     # add loss by dropout
-    model.add(Dropout(0.25))
+    model.add(KDropout(0.25))
     # 2 conv layer iteration
-    model.add(Conv2D(filters = 32, kernel_size = (2, 2), activation = 'relu'))
-    model.add(MaxPooling2D(pool_size = (2,2), strides = 2))
-    model.add(Dropout(0.5))
+    model.add(KConv2D(filters = 32, kernel_size = (2, 2), activation = 'relu'))
+    model.add(KMaxPooling2D(pool_size = (2,2), strides = 2))
+    model.add(KDropout(0.5))
     # 3 conv layer iteration
-    model.add(Conv2D(filters = 32, kernel_size = (2, 2), activation = 'relu'))
-    model.add(MaxPooling2D(pool_size = (2,2), strides = 2))
-    model.add(Dropout(0.5))
+    model.add(KConv2D(filters = 32, kernel_size = (2, 2), activation = 'relu'))
+    model.add(KMaxPooling2D(pool_size = (2,2), strides = 2))
+    model.add(KDropout(0.5))
     # flatten to feed into dense layer
-    model.add(Flatten())
+    model.add(KFlatten())
     # begin down-transform for final response
-    model.add(Dense(50, activation = 'relu'))
+    model.add(KDense(50, activation = 'relu'))
     # project onto 1 output
-    model.add(Dense(1, activation = 'sigmoid'))
+    model.add(KDense(1, activation = 'sigmoid'))
     # compile model
     model.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
     earlystop = EarlyStopping(patience = 3)
@@ -180,13 +187,22 @@ for point in all_data:
 refs = np.asarray(refs)
 labels_ref = np.concatenate((np.ones(len(sig_img)), np.zeros(len(bkg_img))))
 
-# create drone
-drone = BaseModel(len(sig_img[0].flatten()), 1)
-drone.add_layer(675)
-drone.add_layer(1)
+# create advanced drone
 
-conv = BasicConverter(num_epochs = epochNum, threshold = threshold)
-drone = conv.convert_model(drone, model, all_data, conv_2d = True)
+drone = AdvancedModel()
+drone.add(Conv2D(n_filters = 10, kernel_size = (3, 3), activation = relu,
+                 input_shape = (3, 15, 15), data_format = 'channels_first'))
+drone.add(MaxPool2D(pool_size = (2,2), strides = 1))
+drone.add(Conv2D(n_filters = 10, kernel_size = (2, 2), activation = relu))
+drone.add(MaxPool2D(pool_size = (2,2), strides = 1))
+drone.add(Conv2D(n_filters = 10, kernel_size = (2, 2), activation = relu))
+drone.add(MaxPool2D(pool_size = (2,2), strides = 1))
+drone.add(Flatten())
+drone.add(Dense(50, activation = relu))
+drone.add(Dense(1, activation = sigmoid))
+
+conv = AdvancedConverter(num_epochs = epochNum, threshold = threshold, batch_size = 10)
+drone = conv.convert_model(drone, model, all_data)
 conv.save_history('./converted_hist.pkl')
 
 drone.save_model('./converted_drone.pkl')

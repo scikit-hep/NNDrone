@@ -236,14 +236,11 @@ if not model:
     sys.exit(1)
 # get full keras response space on data
 refs = []
-flattened = []
 for point in all_data:
     prob = model.predict_proba(np.expand_dims(point, axis = 0))[0][0]
     refs.append(prob)
-    flattened.append(point)
 refs = np.asarray(refs)
 labels_ref = np.concatenate((np.ones(len(sig_img)), np.zeros(len(bkg_img))))
-flattened = np.asarray(flattened)
 
 # create drone
 drone = BaseModel(len(sig_img[0].flatten()), 1)
@@ -256,17 +253,12 @@ conv.save_history('./converted_hist.pkl')
 
 drone.save_model('./converted_drone.pkl')
 
-joblib.dump(scaler, open('./scaler_drone.pkl', 'wb'))
-
 refs_drone = []
-flattened_drone = []
 for point in all_data:
     prob = drone.evaluate_total(point)
     refs_drone.append(prob)
-    flattened_drone.append(point)
 refs_drone = np.asarray(refs_drone)
 labels_drone = np.concatenate((np.ones(len(sig_img)), np.zeros(len(bkg_img))))
-flattened_drone = np.asarray(flattened_drone)
 
 joblib.dump(refs, open('./response_keras.pkl', 'wb'))
 joblib.dump(labels_ref, open('./labels_keras.pkl', 'wb'))

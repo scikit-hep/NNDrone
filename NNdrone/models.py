@@ -1,10 +1,14 @@
-try:
-    from utilities import sigmoid_activation, sigmoid_prime, cost_derivative, inv_sigmoid_activation
-except ImportError:
-    from utilities.utilities import sigmoid_activation, sigmoid_prime, cost_derivative, inv_sigmoid_activation
 import pickle
 import numpy as np
+try:
+    from utilities import sigmoid_activation, sigmoid_prime, cost_derivative, inv_sigmoid_activation, get_class
+except ImportError:
+    from utilities.utilities import sigmoid_activation, sigmoid_prime, cost_derivative, inv_sigmoid_activation, get_class
 
+try:
+    from activations import cross_entropy
+except ImportError:
+    from NNdrone.activations import cross_entropy
 
 class BaseModel(object):
     def __init__(self, n_features, n_outputs, layers = None, initialiser = None):
@@ -235,3 +239,138 @@ class BaseModel(object):
     def __ne__(self, other):
         """are models different"""
         return not (self == other)
+
+
+class AdvancedModel(object):
+    def __init__(self, layers = None, learning_rate = 0.05, loss = cross_entropy):
+        self.layers = [] if layers is None else layers
+        self.loss = loss
+        self._learning_rate = learning_rate
+
+
+    @property
+    def learning_rate(self):
+        return self._learning_rate
+
+
+    @learning_rate.setter
+    def learning_rate(self, v):
+        self._learning_rate = v
+
+
+    def add(self, layer):
+        self.layers.append(layer)
+        if len(self.layers) == 1:
+            self.layers[-1].configure()
+        else:
+            self.layers[-1].input_shape = self.layers[-2].output_shape()
+            self.layers[-1].configure()
+
+
+    def num_layers(self):
+        return len(self.layers)
+
+
+    def evaluate_total(self, inputs, debug = False):
+        return self.forward_pass(inputs)
+
+
+    def forward_pass(self, inputs):
+        act = inputs
+        for l in self.layers:
+            act = l.forward_pass(act)
+        return act
+
+
+    def forward_pass_fast(self, inputs):
+        act = inputs
+        for l in self.layers:
+            act = l.forward_pass_fast(act)
+        return act
+
+
+    def train_step(self, batch):
+        batch_inputs, batch_labels = batch
+        act = batch_inputs
+        for l in self.layers:
+            act = l.forward_pass(act)
+
+        loss_err = self.loss.gradient(act, batch_labels)
+        back_err = loss_err
+        for l in reversed(self.layers):
+            back_err = l.backprop(back_err)
+            l.update(self.learning_rate)
+
+
+    def add_layer_dynamic(self):
+        raise NotImplementedError()
+
+
+    def expand_layer_dynamic(self, layer_index):
+        out_shape = self.layers[layer_index].add_filter()
+        for idx in range(layer_index + 1, len(self.layers)):
+            out_shape = self.layers[layer_index + 1].change_input(out_shape)
+
+
+    def print_layers(self):
+        for idx in len(self.layers):
+            print('Configuration for layer [{}]: {}'.format(idx, l.__class__.__name__))
+            self.layers[idx].print()
+
+
+    def eval_layer(self, inputs, layer_idx, debug = False):
+        return self.layers[layer_idx].forward_pass(inputs)
+
+
+    def backprop(self, batch_inputs, batch_labels):
+        raise NotImplementedError()
+
+
+    def update(self, batch_inputs, batch_labels, learning_rate):
+        act = batch_inputs
+        for l in self.layers:
+            act = l.forward_pass(act)
+
+        loss_err = self.loss.gradient(act, batch_labels)
+        back_err = loss_err
+        for l in reversed(self.layers):
+            back_err = l.backprop(back_err)
+            l.update(learning_rate)
+
+
+    def save_model(self, output_name):
+        f_out = open(output_name, 'wb')
+        pickle.dump(self, f_out)
+        f_out.close()
+
+
+    def load_model(self, input_name):
+        raise NotImplementedError()
+
+
+    def __eq__(self, other):
+        """are models the same"""
+        if len(self.layers != len(other.layers)):
+            return False
+        for i in range(len(self.layers)):
+            if self.layers[i].__class__.__name__ != other.layers[i].__class__.__name__:
+                return False
+            if self.layers[i].input_shape != other.layers[i].input_shape:
+                return False
+            if self.layers[i].output_shape() != other.layers[i].output_shape():
+                return False
+        return True
+
+
+    def __ne__(self, other):
+        """are models different"""
+        return not (self == other)
+
+
+
+
+
+
+
+
+
