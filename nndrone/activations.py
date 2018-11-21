@@ -81,7 +81,7 @@ class MeanSquaredError(Loss):
         return (1. / 2. * x.shape[0]) * ((x - y) ** 2.)
 
 
-    def gradient(self, X, y):
+    def gradient(self, x, y):
         return (x - y) / x.shape[0]
 
 

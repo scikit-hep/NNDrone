@@ -43,7 +43,7 @@ class MaxPool2D(Layer):
 
                 block = X_padded[:, block_width_start:block_width_end, block_height_start:block_height_end, :]
                 out[:, w, h, :] = np.max(block, axis = (1, 2))
-        self.__forward_cache = (inpts, out)
+        self.__cache['forward'] = (inpts, out)
         if self.activation is not None:
             return self.activation.response(out)
         return out
@@ -79,13 +79,13 @@ class MaxPool2D(Layer):
 
 
     def backprop(self, back_err):
-        inpts = self.__forward_cache[0]
-        max_pool_output = self.__forward_cache[1]
+        inpts = self.__cache['forward'][0]
+        max_pool_output = self.__cache['forward'][1]
         batch_size, input_width, input_height, input_depth = inpts.shape
         # get grad before activation
         delta = back_err
         if self.activation is not None:
-            delta = np.multiply(back_err, self.activation.gradient(self.__forward_cache[1]))  # layer error
+            delta = np.multiply(back_err, self.activation.gradient(self.__cache['forward'][1]))  # layer error
         # pad input as needed
         # X_padded = np.pad(inpts, ((0,0), (0, self.pad_shape[0]), (0, self.pad_shape[1]), (0,0)), 'constant', constant_values = self.pad_fillval)
         X_padded = inpts
@@ -161,6 +161,9 @@ class MaxPool2D(Layer):
         height = (self.input_heigth - self.pool_size[1]) / self.strides[1] + 1
         self.__out_shape = (int(width), int(height), int(self.n_channels))
         self.pad_fillval = self.pad_fillval
+        self.__cache = dict()
+        self.__cache['forward'] = (None, None)
+        self.__cache['back'] = (None, None)
 
 
     def calc_padding(self, input_shape, pool_shape, strides):

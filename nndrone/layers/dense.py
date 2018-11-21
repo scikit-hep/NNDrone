@@ -21,7 +21,7 @@ class Dense(Layer):
         z = np.dot(inputs, self.filters['weight'])
         if self.use_bias:
             z += self.filters['bias']
-        self.__forward_cache = (inputs, z)
+        self.__cache['forward'] = (inputs, z)
         if self.activation is not None:
             return self.activation.response(z)
         return z
@@ -39,17 +39,18 @@ class Dense(Layer):
     def backprop(self, back_err):
         delta = back_err
         if self.activation is not None:
-            delta = np.multiply(back_err, self.activation.gradient(self.__forward_cache[1]))  # layer error
+            delta = np.multiply(back_err, self.activation.gradient(self.__cache['forward'][1]))  # layer error
         if self.use_bias:
-            self.grad_bias = np.sum(delta, axis = 0, keepdims = True)
-        self.grad_weight = np.dot(self.__forward_cache[0].T, delta)
+            db = np.sum(delta, axis = 0, keepdims = True)
+        dw = np.dot(self.__cache['forward'][0].T, delta)
+        self.__cache['back'] = (dw, db if self.use_bias else None)
         return np.dot(delta, self.filters['weight'].T)
 
 
     def update(self, learning_rate = 0.05):
-        self.filters['weight'] = self.filters['weight'] - learning_rate * self.grad_weight
+        self.filters['weight'] = self.filters['weight'] - learning_rate * self.__cache['back'][0]
         if self.use_bias:
-            self.filters['bias'] = self.filters['bias'] - learning_rate * self.grad_bias
+            self.filters['bias'] = self.filters['bias'] - learning_rate * self.__cache['back'][1]
 
 
     def configure(self):
@@ -73,6 +74,9 @@ class Dense(Layer):
                 raise ValueError('Unsupported activation: {}'.format(self.activation))
         else:
             self.activation = None
+        self.__cache = dict()
+        self.__cache['forward'] = (None, None)
+        self.__cache['back'] = (None, None)
 
 
     def print(self):

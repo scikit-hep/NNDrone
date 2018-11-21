@@ -243,7 +243,7 @@ class BaseModel(object):
 
 class AdvancedModel(object):
     def __init__(self, layers = None, learning_rate = 0.05, loss = cross_entropy):
-        self.layers = [] if layers is None else layers
+        self.layers = list() if layers is None else layers
         self.loss = loss
         self._learning_rate = learning_rate
 

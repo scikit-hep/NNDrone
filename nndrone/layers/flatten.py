@@ -14,8 +14,9 @@ class Flatten(Layer):
 
 
     def forward_pass(self, inputs):
-        z = np.reshape(inputs, (inputs.shape[0], -1))
-        self.__forward_cache = (z)
+        inpts = inputs
+        z = np.reshape(inpts, (inpts.shape[0], -1))
+        self.__cache['forward'] = (inpts, z)
         return z
 
 
@@ -39,6 +40,9 @@ class Flatten(Layer):
                 raise ValueError('Invalid input_shape. Should be a tuple of 3 integers')
         else:
             raise ValueError('When using this layer as the first layer, you need to specify \'input_shape\', e.g.: (width, height, channels) in \'channels_last\' data_format.')
+        self.__cache = dict()
+        self.__cache['forward'] = (None, None)
+        self.__cache['back'] = (None, None)
 
 
     def print(self):

@@ -60,7 +60,7 @@ class Conv2D(Layer):
                         out[:, w, h, d] = np.sum(block * filter_weights, axis=(1, 2, 3)) + bias[d]
                     else:
                         out[:, w, h, d] = np.sum(block * filter_weights, axis=(1, 2, 3))
-        self.__forward_cache = (inpts, out)
+        self.__cache['forward'] = (inpts, out)
         if self.activation is not None:
             return self.activation.response(out)
         return out
@@ -91,12 +91,12 @@ class Conv2D(Layer):
 
     def backprop(self, back_err):
         # use cached input
-        inpts = self.__forward_cache[0]
+        inpts = self.__cache['forward'][0]
         batch_size, input_width, input_height, input_depth = inpts.shape
         # get grad before activation
         delta = back_err
         if self.activation is not None:
-            delta = np.multiply(back_err, self.activation.gradient(self.__forward_cache[1]))  # layer error
+            delta = np.multiply(back_err, self.activation.gradient(self.__cache['forward'][1]))  # layer error
         # pad input as needed
         X_padded = np.pad(inpts, ((0,0), self.pad_shape, self.pad_shape, (0,0)), 'constant')
         # Calculate the width and height of the forward pass output
@@ -106,8 +106,9 @@ class Conv2D(Layer):
         # allocate output tensor
         dx_padded = np.zeros_like(X_padded)  # removing padding at the end
         dw = np.zeros_like(self.filters['weight'])
-        db = np.zeros_like(self.filters['bias'])
-        db = np.sum(delta, axis = (0, 1, 2))  # get the depth of the output, last dim
+        if self.use_bias:
+            db = np.zeros_like(self.filters['bias'])
+            db = np.sum(delta, axis = (0, 1, 2))  # get the depth of the output, last dim
         dx = None
         for w in range(output_width):
             for h in range(output_height):
@@ -129,14 +130,14 @@ class Conv2D(Layer):
                 dx = dx_padded[:, :, self.pad_shape[1]:-self.pad_shape[1], :]
             else:
                 dx = dx_padded
-        self.__back_cache = (dw, db)
+        self.__cache['back'] = (dw, db if self.use_bias else None)
         return dx
 
 
     def update(self, learning_rate = 0.05):
-        self.filters['weight'] = self.filters['weight'] - learning_rate * self.__back_cache[0]
+        self.filters['weight'] = self.filters['weight'] - learning_rate * self.__cache['back'][0]
         if self.use_bias:
-            self.filters['bias'] = self.filters['bias'] - learning_rate * self.__back_cache[1]
+            self.filters['bias'] = self.filters['bias'] - learning_rate * self.__cache['back'][1]
 
     def configure(self):
         if np.ndim(self.kernel_size) == 0:
@@ -194,6 +195,9 @@ class Conv2D(Layer):
         out_width = (self.input_width - self.kernel_size[0] + 2 * self.pad_shape[0]) / self.strides[0] + 1
         out_height = (self.input_heigth - self.kernel_size[1] + 2 * self.pad_shape[1]) / self.strides[1] + 1
         self.__out_shape = (int(out_width), int(out_height), int(self.n_filters))
+        self.__cache = dict()
+        self.__cache['forward'] = (None, None)
+        self.__cache['back'] = (None, None)
 
 
     def calc_padding(self, input_shape, kernel_shape, strides):
