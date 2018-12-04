@@ -142,8 +142,8 @@ else:
     sig_data = joblib.load(parser.signal)
     bkg_data = joblib.load(parser.background)
 if not args.processed:
-    sig_data = construct_dataset(sig)
-    bkg_data = construct_dataset(bkg)
+    sig_data = construct_dataset(sig_img)
+    bkg_data = construct_dataset(bkg_img)
 else:
     sig_data = np.asarray(sig_data)
     bkg_data = np.asarray(bkg_data)
@@ -256,21 +256,27 @@ for point in all_data:
     prob = model.predict_proba(np.expand_dims(point, axis = 0))[0][0]
     refs.append(prob)
 refs = np.asarray(refs)
-labels_ref = np.concatenate((np.ones(len(sig_img)), np.zeros(len(bkg_img))))
+labels_ref = np.concatenate((np.ones(len(sig_data)), np.zeros(len(bkg_data))))
 
 # create drone
-drone = BaseModel(len(sig_img[0].flatten()), 1)
+drone = BaseModel(len(sig_data[0].flatten()), 1)
 drone.add_layer(50)
 drone.add_layer(1)
 
 conv = BasicConverter(num_epochs = epochNum, threshold = threshold, batch_size = batchSize)
-drone = conv.convert_model(drone, model, all_data, conv_1d = True)
+dr_data = all_data
+if len(all_data.shape) == 3:
+    if all_data.shape[1] == 1:
+        dr_data = np.squeeze(np.moveaxis(all_data, 1, 2), axis = 2)
+    else:
+        dr_data = np.squeeze(all_data, axis = 2)
+drone = conv.convert_model(drone, model, dr_data, conv_1d = True)
 conv.save_history('./converted_hist.pkl')
 
 drone.save_model('./converted_drone.pkl')
 
 refs_drone = []
-for point in all_data:
+for point in dr_data:
     prob = drone.evaluate_total(point)
     refs_drone.append(prob)
 refs_drone = np.asarray(refs_drone)
