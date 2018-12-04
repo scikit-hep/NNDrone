@@ -25,12 +25,12 @@ except ImportError:
 try:
     from models import BaseModel
 except ImportError:
-    from models.models import BaseModel
+    from nndrone.models import BaseModel
 
 try:
     from converters import BasicConverter
 except ImportError:
-    from utilities.converters import BasicConverter
+    from nndrone.converters import BasicConverter
 
 try:
     from preprocessing import impose_symmetry
@@ -99,6 +99,14 @@ parser.add_argument('-n', '--numpy-format', action = 'store_true', dest = 'np_fo
                     help = 'Use when data is stored in prepared NumPy pickle files.')
 parser.add_argument('-d', '--dump-processed', action = 'store_true', dest = 'dump_processed',
                     help = 'Dump processed signal and background to files (derived from input filename).')
+parser.add_argument('-k', '--keras-output', action = 'store', default = './keras/Type_Jets_Keras_Conv1D/models/keras_jet_locallyconnected1d_for_drone.h5',
+                    dest = 'keras_output', help = 'Output file for Keras model.')
+parser.add_argument('-r', '--keras-history', action = 'store', default = './keras/Type_Jets_Keras_Conv1D/history/keras_jet_locallyconnected1d_for_drone_hist.h5',
+                    dest = 'keras_history', help = 'Output file for Keras model learning history.')
+parser.add_argument('-o', '--drone-output', action = 'store', default = './keras/Type_Jets_Keras_Conv1D/models/converted_drone.pkl',
+                    dest = 'drone_output', help = 'Output file for drone model.')
+parser.add_argument('-t', '--drone-hist', action = 'store', default = './keras/Type_Jets_Keras_Conv1D/history/converted_hist.pkl',
+                    dest = 'drone_history', help = 'Output file for drone model learning history.')
 subparsers  = parser.add_subparsers(description = 'Choose between providing a saved Keras model or generating a new one.',
                                     dest = 'subcommand')
 subparsers.required = True
@@ -112,8 +120,8 @@ if args.processed and args.dump_processed:
 
 # define constants
 epochNum = 1500
-batchSize = 128
-alpha = 0.05
+batchSize = 32
+learning_rate = 0.05
 threshold = 0.01
 
 # load dataset, should be already scaled and normalized
@@ -171,7 +179,7 @@ else:
     ## Make Keras model
     model = Sequential()
     ## LocallyConnected1D to handle input of ordered 1D data
-    model.add(LocallyConnected1D(filters = 32, kernel_size = 3, activation = 'relu',
+    model.add(LocallyConnected1D(filters = 32, kernel_size = 2, activation = 'relu',
                                  input_shape = sig_data[0].shape, data_format = 'channels_first'))
     # reduce spacial size of convolutional output
     # by non-linear downsampling
@@ -183,13 +191,13 @@ else:
     model.add(MaxPooling1D(pool_size = 2, strides = 2))
     model.add(Dropout(0.25))
     # # 3 conv layer iteration
-    # model.add(Conv1D(filters = 32, kernel_size = 2, activation = 'relu'))
-    # model.add(MaxPooling1D(pool_size = 2, strides = 2))
-    # model.add(Dropout(0.5))
+    model.add(Conv1D(filters = 32, kernel_size = 2, activation = 'relu'))
+    model.add(MaxPooling1D(pool_size = 2, strides = 2))
+    model.add(Dropout(0.5))
     # flatten to feed into dense layer
     model.add(Flatten())
     # # begin down-transform for final response
-    # model.add(Dense(50, activation = 'relu'))
+    model.add(Dense(50, activation = 'relu'))
     # project onto 1 output
     model.add(Dense(1, activation = 'sigmoid'))
     # summary
@@ -197,24 +205,32 @@ else:
     ## _________________________________________________________________
     ## Layer (type)                 Output Shape              Param #
     ## =================================================================
-    ## locally_connected1d_10 (Loca (None, 138, 32)           17664
+    ## locally_connected1d_1 (Local (None, 139, 32)           13344
     ## _________________________________________________________________
-    ## max_pooling1d_13 (MaxPooling (None, 136, 32)           0
+    ## max_pooling1d_1 (MaxPooling1 (None, 138, 32)           0
     ## _________________________________________________________________
-    ## dropout_12 (Dropout)         (None, 136, 32)           0
+    ## dropout_1 (Dropout)          (None, 138, 32)           0
     ## _________________________________________________________________
-    ## conv1d_6 (Conv1D)            (None, 134, 32)           3104
+    ## conv1d_1 (Conv1D)            (None, 136, 32)           3104
     ## _________________________________________________________________
-    ## max_pooling1d_14 (MaxPooling (None, 132, 32)           0
+    ## max_pooling1d_2 (MaxPooling1 (None, 68, 32)            0
     ## _________________________________________________________________
-    ## dropout_13 (Dropout)         (None, 132, 32)           0
+    ## dropout_2 (Dropout)          (None, 68, 32)            0
     ## _________________________________________________________________
-    ## flatten_5 (Flatten)          (None, 4224)              0
+    ## conv1d_2 (Conv1D)            (None, 67, 32)            2080
     ## _________________________________________________________________
-    ## dense_7 (Dense)              (None, 1)                 4225
+    ## max_pooling1d_3 (MaxPooling1 (None, 33, 32)            0
+    ## _________________________________________________________________
+    ## dropout_3 (Dropout)          (None, 33, 32)            0
+    ## _________________________________________________________________
+    ## flatten_1 (Flatten)          (None, 1056)              0
+    ## _________________________________________________________________
+    ## dense_1 (Dense)              (None, 50)                52850
+    ## _________________________________________________________________
+    ## dense_2 (Dense)              (None, 1)                 51
     ## =================================================================
-    ## Total params: 24,993
-    ## Trainable params: 24,993
+    ## Total params: 71,429
+    ## Trainable params: 71,429
     ## Non-trainable params: 0
     ## _________________________________________________________________
     # compile model
@@ -224,7 +240,7 @@ else:
     history = model.fit(setTrain, labels, batch_size = batchSize, epochs = epochNum,
                         validation_data = (setTest, labels), callbacks = [earlystop])
     # show plot
-    scatter(range(0, 300), history.history['loss'], [0, 300], [min(history.history['loss']),
+    scatter(range(0, len(history.epoch)), history.history['loss'], [0, len(history.epoch)], [min(history.history['loss']),
             max(history.history['loss'])], 'Epoch', 'Loss', 'Training Loss', 'trainig_loss.pdf')
     # save history
     joblib.dump(history.history, open('./keras_hist.pkl', 'wb'))
@@ -247,7 +263,7 @@ drone = BaseModel(len(sig_img[0].flatten()), 1)
 drone.add_layer(50)
 drone.add_layer(1)
 
-conv = BasicConverter(num_epochs = epochNum, threshold = threshold)
+conv = BasicConverter(num_epochs = epochNum, threshold = threshold, batch_size = batchSize)
 drone = conv.convert_model(drone, model, all_data, conv_1d = True)
 conv.save_history('./converted_hist.pkl')
 

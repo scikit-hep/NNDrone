@@ -22,6 +22,7 @@ class BasicConverter(object):
         self._diffs = []
         self._losses = []
         self._updates = []
+        self._epoch = 0
 
 
     def losses(self):
@@ -43,42 +44,45 @@ class BasicConverter(object):
         f_train.close()
 
 
-    def convert_model(self, drone_model, base_model, datapoints, scaler = None, conv_1d = False, conv_2d = False):
-        # Create the list of outputs for the base model
-        if conv_1d and conv_2d:
-            print('ERROR: conv_1d and conv_2d are mutually exclusive')
-            return None
-        refs = []
-        flattened = []
-        for point in datapoints:
-            spoint = point
-            if scaler and not conv_2d:
-                spoint = scaler.transform([point])
-            prob = 0.0
-            if conv_1d:
-                prob = base_model.predict_proba(np.expand_dims(np.expand_dims(spoint, axis = 2), axis = 0))[0][0]
-            elif conv_2d:
-                # this will match if original model was trained with correct dimensionality
-                prob = base_model.predict_proba(np.expand_dims(spoint, axis = 0))
-            else:
-                prob = base_model.predict_proba(spoint.reshape(1, -1))[0][0]
-            if conv_2d:
-                spoint = spoint.flatten().tolist()
-            else:
-                spoint = spoint[0].flatten().tolist()
-            refs.append(prob)
-            flattened.append(spoint)
+    def get_refs(self, base_model, datapoints, scaler = None, conv_1d = False, conv_2d = False):
+        try:
+            # Return the cached list of reference outputs for the base model
+            return (self.__datapoints, self.__refs)
+        except AttributeError as e:
+            # Create the list of reference outputs for the base model
+            if conv_1d and conv_2d:
+                print('ERROR: conv_1d and conv_2d are mutually exclusive')
+                return None
+            refs = []
+            flattened = []
+            for point in datapoints:
+                spoint = point
+                if scaler and not conv_2d:
+                    spoint = scaler.transform([point])
+                prob = 0.0
+                if conv_1d:
+                    prob = base_model.predict_proba(np.expand_dims(np.expand_dims(spoint, axis = 2), axis = 0))[0][0]
+                elif conv_2d:
+                    # this will match if original model was trained with correct dimensionality
+                    prob = base_model.predict_proba(np.expand_dims(spoint, axis = 0))
+                else:
+                    prob = base_model.predict_proba(spoint.reshape(1, -1))[0][0]
+                refs.append(prob)
+                flattened.append(spoint.flatten().tolist())
+            self.__datapoints = np.asarray(flattened)
+            self.__refs = np.asarray(refs)
+            return (self.__datapoints, self.__refs)
+
+
+    def convert_model(self, drone_model, base_model, datapoints, scaler = None, conv_1d = False, conv_2d = False, epoch_reset = False):
+        # Get the list of reference outputs for the base model
+        datapoints_for_drone, refs = self.get_refs(base_model, datapoints, scaler, conv_1d, conv_2d)
         inflate = 0  # to inflate the learning without change iterations
-        q = 0
+        if epoch_reset:
+            self._epoch = 0
         avloss = 0
-        datapoints_for_drone = None
-        if conv_2d:
-            # BaseModel only accepts vector objects in N-D space
-            datapoints_for_drone = np.asarray([np.asarray(point.flatten()) for point in datapoints])
-        else:
-            datapoints_for_drone = datapoints
         # convert until min epochs are passed and leave only if loss at minima
-        while (q < self._num_epochs) or (self._updatedLoss < avloss):
+        while (self._epoch < self._num_epochs) or (self._updatedLoss < avloss):
             # initialize the total loss for the epoch
             epochloss = []
             # loop over our data in batches
@@ -95,9 +99,9 @@ class BasicConverter(object):
                 drone_model.update(batchX, batchY, self._learning_rate)
             avloss = np.average(epochloss)
             diff = 0.0
-            if q > 0:
+            if self._epoch > 0:
                 # is the relative improvement of the loss too small, smaller than threshold
-                diff = math.fabs(avloss-self._losses[-1])/avloss
+                diff = math.fabs(avloss - self._losses[-1]) / avloss
                 self._diffs.append(diff)
                 self._losses.append(avloss)
                 update = 0
@@ -125,14 +129,14 @@ class BasicConverter(object):
                     print('Model structure is now:')
                     drone_model.print_layers()
                 self._updates.append(update)
-            print('Epoch: %s, loss %s, diff %.5f, last updated loss %.5f' % (q, avloss, diff, self._updatedLoss))
+            print('Epoch: %s, loss %s, diff %.5f, last updated loss %.5f' % (self._epoch, avloss, diff, self._updatedLoss))
             # update our loss history list by taking the average loss
             # across all batches
-            if q == 0:  # be consistent at the first epoch
+            if self._epoch == 0:  # be consistent at the first epoch
                 self._losses.append(avloss)
                 self._diffs.append(math.fabs(avloss - self._updatedLoss) / avloss)
                 self._updates.append(0)
-            q += 1
+            self._epoch += 1
         return drone_model
 
 
@@ -154,6 +158,7 @@ class AdvancedConverter(object):
         self._diffs = []
         self._losses = []
         self._updates = []
+        self._epoch = 0
         self.__rr_begin = 0
         self.__rr_last = 0
 
@@ -182,21 +187,32 @@ class AdvancedConverter(object):
         f_train.close()
 
 
-    def convert_model(self, drone_model, base_model, datapoints, scaler = None):
-        # Create the list of outputs for the base model
-        refs = []
-        datapoints_for_drone = datapoints
-        if scaler:
-            datapoints_for_drone = scaler.transform(datapoints)
-        for point in datapoints_for_drone:
-            prob = base_model.predict_proba(point)
-            refs.append(prob)
-        refs = np.asarray(refs)
+    def get_refs(self, base_model, datapoints, scaler = None):
+        try:
+            # Return the cached list of reference outputs for the base model
+            return (self.__datapoints, self.__refs)
+        except AttributeError as e:
+            # Create the list of reference outputs for the base model
+            refs = []
+            datapoints_for_drone = datapoints
+            if scaler:
+                datapoints_for_drone = scaler.transform(datapoints)
+            for point in datapoints_for_drone:
+                prob = base_model.predict_proba(point)
+                refs.append(prob)
+            self.__datapoints = datapoints_for_drone
+            self.__refs = refs
+            return (self.__datapoints, self.__refs)
+
+    def convert_model(self, drone_model, base_model, datapoints, scaler = None, epoch_reset = False):
+        # Get the list of reference outputs for the base model
+        datapoints_for_drone, refs = self.get_refs(base_model, datapoints, scaler)
         inflate = 0  # to inflate the learning without change iterations
-        epoch = 0
+        if epoch_reset:
+            self._epoch = 0
         avloss = 0
         # convert until min epochs are passed and leave only if loss at minima
-        while (epoch < self._num_epochs) or (self._updatedLoss < avloss):
+        while (self._epoch < self._num_epochs) or (self._updatedLoss < avloss):
             # initialize the total loss for the epoch
             epochloss = []
             # loop over our data in batches
@@ -213,7 +229,7 @@ class AdvancedConverter(object):
                 drone_model.update(batchX, batchY, self._learning_rate)
             avloss = np.average(epochloss)
             diff = 0.0
-            if epoch > 0:
+            if self._epoch > 0:
                 # is the relative improvement of the loss too small, smaller than threshold
                 diff = math.fabs(avloss - self._losses[-1]) / avloss
                 self._diffs.append(diff)
@@ -245,12 +261,12 @@ class AdvancedConverter(object):
                     print('Model structure is now:')
                     drone_model.print_layers()
                 self._updates.append(update)
-            print('Epoch: %s, loss %s, diff %.5f, last updated loss %.5f' % (epoch, avloss, diff, self._updatedLoss))
+            print('Epoch: %s, loss %s, diff %.5f, last updated loss %.5f' % (self._epoch, avloss, diff, self._updatedLoss))
             # update our loss history list by taking the average loss
             # across all batches
-            if epoch == 0:  # be consistent at the first epoch
+            if self._epoch == 0:  # be consistent at the first epoch
                 self._losses.append(avloss)
                 self._diffs.append(math.fabs(avloss - self._updatedLoss) / avloss)
                 self._updates.append(0)
-            epoch += 1
+            self._epoch += 1
         return drone_model
