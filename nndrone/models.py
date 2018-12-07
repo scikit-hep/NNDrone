@@ -213,27 +213,23 @@ class BaseModel(object):
 
     def __eq__(self, other):
         """are models the same"""
+        if not isinstance(other, BaseModel):
+            return False
         if self._n_features != other._n_features:
-            print("Number of input features differ")
             return False
-
         if self._n_outputs != other._n_outputs:
-            print("Number of outputs differ")
             return False
-
         if len(self._layers) != len(other._layers):
-            print("Layer number differs")
             return False
-
         for i in range(len(self._layers)):
             if not np.array_equal(np.asarray(self._layers[i]['bias'], dtype = float), np.asarray(other._layers[i]['bias'], dtype = float)):
-                print("Bias layers differ")
                 return False
             if not np.array_equal(np.asarray(self._layers[i]['weight'], dtype = float), np.asarray(other._layers[i]['weight'], dtype = float)):
-                print("Weight layers differ")
                 return False
-
         return True
+
+    def __hash__(self):
+        return hash((self._n_features, self._n_outputs, self._layers))
 
 
     def __ne__(self, other):
@@ -308,14 +304,15 @@ class AdvancedModel(object):
 
     def expand_layer_dynamic(self, layer_index):
         out_shape = self.layers[layer_index].add_filter()
-        for idx in range(layer_index + 1, len(self.layers)):
-            out_shape = self.layers[layer_index + 1].change_input(out_shape)
+        for idx in range(layer_index + 1, self.num_layers()):
+            out_shape = self.layers[idx].change_input(out_shape)
 
 
     def print_layers(self):
-        for idx in len(self.layers):
+        for idx, l in self.layers:
+            l = self.layers[idx]
             print('Configuration for layer [{}]: {}'.format(idx, l.__class__.__name__))
-            self.layers[idx].print()
+            l.print()
 
 
     def eval_layer(self, inputs, layer_idx, debug = False):
@@ -350,9 +347,11 @@ class AdvancedModel(object):
 
     def __eq__(self, other):
         """are models the same"""
-        if len(self.layers != len(other.layers)):
+        if not isinstance(other, AdvancedModel):
             return False
-        for i in range(len(self.layers)):
+        if (self.num_layers() != other.num_layers()):
+            return False
+        for i in range(self.num_layers()):
             if self.layers[i].__class__.__name__ != other.layers[i].__class__.__name__:
                 return False
             if self.layers[i].input_shape != other.layers[i].input_shape:
@@ -360,6 +359,10 @@ class AdvancedModel(object):
             if self.layers[i].output_shape() != other.layers[i].output_shape():
                 return False
         return True
+
+
+    def __hash__(self):
+        return hash((self.layers, self.loss, self._learning_rate))
 
 
     def __ne__(self, other):

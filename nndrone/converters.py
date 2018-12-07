@@ -7,6 +7,8 @@ try:
 except ImportError:
     from utilities.utilities import dot_loss, next_batch
 
+class DontCacheRef(Exception):
+    pass
 
 class BasicConverter(object):
     def __init__(self, learning_rate = 0.05, batch_size = 1, num_epochs = 300, threshold = 0.02, add_layer_dynamic = False, layer_to_expand = 0):
@@ -44,11 +46,13 @@ class BasicConverter(object):
         f_train.close()
 
 
-    def get_refs(self, base_model, datapoints, scaler = None, conv_1d = False, conv_2d = False):
+    def get_refs(self, base_model, datapoints, scaler = None, conv_1d = False, conv_2d = False, cache_data = True):
         try:
+            if not cache_data:
+                raise DontCacheRef()
             # Return the cached list of reference outputs for the base model
             return (self.__datapoints, self.__refs)
-        except AttributeError as e:
+        except (DontCacheRef, AttributeError) as e:
             # Create the list of reference outputs for the base model
             if conv_1d and conv_2d:
                 print('ERROR: conv_1d and conv_2d are mutually exclusive')
@@ -74,9 +78,9 @@ class BasicConverter(object):
             return (self.__datapoints, self.__refs)
 
 
-    def convert_model(self, drone_model, base_model, datapoints, scaler = None, conv_1d = False, conv_2d = False, epoch_reset = False):
+    def convert_model(self, drone_model, base_model, datapoints, scaler = None, conv_1d = False, conv_2d = False, cache_data = True, epoch_reset = False):
         # Get the list of reference outputs for the base model
-        datapoints_for_drone, refs = self.get_refs(base_model, datapoints, scaler, conv_1d, conv_2d)
+        datapoints_for_drone, refs = self.get_refs(base_model, datapoints, scaler, conv_1d, conv_2d, cache_data)
         inflate = 0  # to inflate the learning without change iterations
         if epoch_reset:
             self._epoch = 0
@@ -187,11 +191,13 @@ class AdvancedConverter(object):
         f_train.close()
 
 
-    def get_refs(self, base_model, datapoints, scaler = None):
+    def get_refs(self, base_model, datapoints, scaler = None, cache_data = True):
         try:
+            if not cache_data:
+                raise DontCacheRef()
             # Return the cached list of reference outputs for the base model
             return (self.__datapoints, self.__refs)
-        except AttributeError as e:
+        except(DontCacheRef, AttributeError) as e:
             # Create the list of reference outputs for the base model
             refs = []
             datapoints_for_drone = datapoints
@@ -204,9 +210,9 @@ class AdvancedConverter(object):
             self.__refs = refs
             return (self.__datapoints, self.__refs)
 
-    def convert_model(self, drone_model, base_model, datapoints, scaler = None, epoch_reset = False):
+    def convert_model(self, drone_model, base_model, datapoints, scaler = None, cache_data = True, epoch_reset = False):
         # Get the list of reference outputs for the base model
-        datapoints_for_drone, refs = self.get_refs(base_model, datapoints, scaler)
+        datapoints_for_drone, refs = self.get_refs(base_model, datapoints, scaler, cache_data)
         inflate = 0  # to inflate the learning without change iterations
         if epoch_reset:
             self._epoch = 0

@@ -6,7 +6,7 @@ import pandas
 import numpy as np
 import sys
 
-from keras.layers import Conv1D, MaxPooling1D, Dropout, Flatten, Dense, Activation
+from keras.layers import LocallyConnected1D, Conv1D, MaxPooling1D, Dropout, Flatten, Dense, Activation
 from keras.models import load_model, Sequential
 from keras.callbacks import EarlyStopping
 
@@ -260,7 +260,7 @@ labels_ref = np.concatenate((np.ones(len(sig_data)), np.zeros(len(bkg_data))))
 
 # create drone
 drone = BaseModel(len(sig_data[0].flatten()), 1)
-drone.add_layer(50)
+drone.add_layer(5)
 drone.add_layer(1)
 
 conv = BasicConverter(num_epochs = epochNum, threshold = threshold, batch_size = batchSize)
