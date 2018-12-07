@@ -105,10 +105,45 @@ measurements~\cite{Komiske:2016rsd}.
 \subsubsection{Training of the original classifier}
 
 The machine learning classifier chosen is also a Keras-based convolutional neural net,
-constructed in an identical way as described in Sec~\ref{sec:orig_training}.
+constructed in an similar way as described in Sec~\ref{sec:orig_training}.
+\begin{lstlisting}
+classifier = Sequential()
+classifier.add(LocallyConnected1D(
+filters = 32, kernel_size = 2,
+activation = 'relu', input_shape = sig_data[0].shape))
+classifier.add(MaxPooling1D(pool_size = 3,
+strides = 1))
+classifier.add(Dropout(0.25))
+classifier.add(Conv1D(filters = 32, kernel_size = 3,
+activation = 'relu'))
+classifier.add(MaxPooling1D(pool_size = 2,
+strides = 2))
+classifier.add(Dropout(0.25))
+classifier.add(Conv1D(filters = 32, kernel_size = 2,
+activation = 'relu'))
+classifier.add(MaxPooling1D(pool_size = 2,
+strides = 2))
+classifier.add(Dropout(0.5))
+classifier.add(Flatten())
+classifier.add(Dense(50, activation = 'relu'))
+classifier.add(Dense(1, activation = 'sigmoid'))
+classifier.compile(optimizer = 'adam',
+loss = 'binary_crossentropy'
+, metrics = ['accuracy'])
+earlystop = EarlyStopping(patience = 3)
+model.fit(setTrain, labels, batch_size = batchSize,
+epochs = epochNum, validation_data = (setTest, labels),
+callbacks = [earlystop])
+\end{lstlisting}
 
-The neural network is trained using 4 jet properties consisting of the energy,
-the combined mass of the particles in the jet, the pseudorapidity, and the jet $K_t$ 
+The training data is preprared as describred in Sec. 3.1 of~\cite{Komiske:2016rsd}. However,
+a further step is added where the images are projected in two 1-D projections each and
+four channels are considered: charged \& neutral particle transverse energy and charged \& neutral
+particle multiplicity. The resulting 1-D feature vector is appended with some
+total kinematic properties such as the $K_t$ of the jet, its momentum, energy, mass,
+multiplicity, etc. - producing a total of 140 individual features.
+% The neural network is trained using 4 jet properties consisting of the energy,
+% the combined mass of the particles in the jet, the pseudorapidity, and the jet $K_t$.
 The signal and background distributions of the input variables
 are shown in Fig.~\ref{fig:inputsGPD}.
 %
@@ -136,9 +171,9 @@ The convergence is also shown in Fig.~\ref{fig:iterdiff}, which shows
 the difference in the value of the loss function with respect to the previous
 epoch. The epochs that trigger an increase in the number of hyperparameters
 are also overlaid.
-In total for the case of B decays, an increase was triggered 38 times compared to 10 times for the
+In total for the case of B decays, an increase was triggered 38 times compared to 67 times for the
 jet separation classifier. The total number
-of parameters in the final drone neural networks are therefore 302 and 106 for the B decay drone
+of parameters in the final drone neural networks are therefore 302 and 10152 for the B decay drone
 and the jet separation drone, respectively. It is interesting
 to note that with the algorithm design of Sec.~\ref{sec:dlearn}, the introduction
 of the new parameter space causes the drone networks to learn faster, as evidenced by
@@ -214,12 +249,24 @@ evaluate. The comparison of the time taken for each model evaluation, determined
 using a Intel Core i7-4770 processor is shown in Table~\ref{tab:comp}.
 \begin{table}[t]
   \centering
+  \caption{Hyperparameter number comparisons of the original models and drone
+  approximations for the HEP examples. \label{tab:comp_param}}
+  \begin{tabular}{l|rr}
+                   & original model                  & drone \\
+    \hline
+    B decay        & 4,111 & 302 \\
+    jet separation & 71,429 & 10152 \\
+  \end{tabular}
+\end{table}
+
+\begin{table}[t]
+  \centering
   \caption{Processing time comparisons of the original models and drone
   approximations for the HEP examples. \label{tab:comp}}
   \begin{tabular}{l|rr}
                    & original model                  & drone \\
     \hline
     B decay        & $19.3 \pm 0.2 \times 10^{-5}$ s & $2.7 \pm 0.2 \times 10^{-5}$ s \\
-    jet separation & $25.2 \pm 0.2 \times 10^{-5}$ s & $2.9 \pm 0.2 \times 10^{-5}$ s \\
+    jet separation &  $3.2 \pm 0.2 \times 10^{-3}$ s & $4.3 \pm 0.2 \times 10^{-4}$ s \\
   \end{tabular}
 \end{table}
