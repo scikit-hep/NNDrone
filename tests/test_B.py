@@ -14,11 +14,19 @@ warnings.filterwarnings("ignore", category=UserWarning)
 def perform():
     from sklearn.externals import joblib
     from sklearn.preprocessing import StandardScaler
+    from sklearn.neural_network import MLPClassifier
     import numpy as np
     import math
     from utilities.utilities import dot_loss, next_batch
     from nndrone.converters import BasicConverter
-    from nndrone.models import BaseModel as Model
+    from nndrone.models import BaseModel
+    try:
+        from plotting import hd_hist
+    except ImportError:
+        from utilities.plotting import hd_hist
+    from sklearn.externals import joblib
+    import numpy as np
+
     import pickle
 
     # DATASET LOADING ***************************************************************
@@ -27,9 +35,6 @@ def perform():
     totalData = []
     probabilitiesSig = []
     probabilitiesBkg = []
-
-    print ('Loading classifier...')
-    classifier = joblib.load("skLearn/Type_B_MLP/Models/classifier_rapidsim.pkl")
 
     print ('Loading signal data file...')
     sig_data = joblib.load('data/signal_data.p')
@@ -41,14 +46,23 @@ def perform():
     trainFraction = 0.5
     cutIndex = int(trainFraction * len(sig_data))
     #
-    sigTrain = sig_data[: cutIndex]
-    sigTest = sig_data[cutIndex:]
+    sigTrain = np.array(sig_data[: cutIndex])
+    sigTest = np.array(sig_data[cutIndex:])
     #
-    bgTrain = bkg_data[: cutIndex]
-    bgTest = bkg_data[cutIndex:]
+    bgTrain = np.array(bkg_data[: cutIndex])
+    bgTest = np.array(bkg_data[cutIndex:])
+
+    classifier = MLPClassifier(activation='relu', alpha=1e-05, batch_size='auto',
+                               beta_1=0.9, beta_2=0.999, early_stopping=False,
+                               epsilon=1e-08, hidden_layer_sizes=(3, 3), learning_rate='constant',
+                               learning_rate_init=0.001, max_iter=200, momentum=0.9,
+                               nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
+                               solver='lbfgs', tol=0.0001, validation_fraction=0.1, verbose=False,
+                               warm_start=False)
 
     # Create the scaler to preprocess the data
-    scaler = joblib.load("skLearn/Type_B_MLP/Models/scaler_rapidsim.pkl")
+    scaler = StandardScaler()
+    scaler.fit(sigTrain)
 
     # transform the training sameple
     sig_train = scaler.transform(sigTrain)
@@ -59,19 +73,73 @@ def perform():
     # do the same to the test data
     bkg_test = scaler.transform(bgTest)
 
+    train = np.append(sig_train, bkg_train, axis=0)
 
-    for s in sig_train:
-        s = scaler.transform([s])
-        prob = classifier.predict_proba(s)[0][0]
-        s = s[0].flatten().tolist()
+    target = np.array([1] * len(sigTrain) + [0] * len(bgTrain))
+    classifier.fit(train, target)
+    '''
+    ptbins = np.linspace(0.0, 10.0, num=50)
+    etabins = np.linspace(1.0, 6.0, num=50)
+
+    sig_pt = [e[0] for e in sig_data]
+    sig_eta = [e[1] for e in sig_data]
+    sig_minPT = [e[2] for e in sig_data]
+    sig_maxPT = [e[3] for e in sig_data]
+    sig_minETA = [e[4] for e in sig_data]
+    sig_maxETA = [e[5] for e in sig_data]
+    bkg_pt = [e[0] for e in bkg_data]
+    bkg_eta = [e[1] for e in bkg_data]
+    bkg_minPT = [e[2] for e in bkg_data]
+    bkg_maxPT = [e[3] for e in bkg_data]
+    bkg_minETA = [e[4] for e in bkg_data]
+    bkg_maxETA = [e[5] for e in bkg_data]
+
+    hd_hist([sig_pt, bkg_pt], 'temp_pt_comp.pdf'
+            , [0.0, 10.0], [0.0, 1000.0]
+            , "Mother $p_{T}$ GeV", "Events", ptbins
+            , ['signal', 'background'])
+
+    hd_hist([sig_eta, bkg_eta], 'temp_eta_comp.pdf'
+            , [1.0, 6.0], [0.0, 400.0]
+            , "Mother $\eta$", "Events", etabins
+            , ['signal', 'background'])
+
+    hd_hist([sig_minPT, bkg_minPT], 'temp_minpt_comp.pdf'
+            , [0.0, 10.0], [0.0, 5000.0]
+            , "min. $p_{T}$ GeV", "Events", ptbins
+            , ['signal', 'background'])
+
+    hd_hist([sig_minETA, bkg_minETA], 'temp_mineta_comp.pdf'
+            , [1.0, 6.0], [0.0, 400.0]
+            , "min. $\eta$", "Events", etabins
+            , ['signal', 'background'])
+
+    hd_hist([sig_maxPT, bkg_maxPT], 'temp_maxpt_comp.pdf'
+            , [0.0, 10.0], [0.0, 2500.0]
+            , "max. $p_{T}$ GeV", "Events", ptbins
+            , ['signal', 'background'])
+
+    hd_hist([sig_maxETA, bkg_maxETA], 'temp_maxeta_comp.pdf'
+            , [1.0, 6.0], [0.0, 400.0]
+            , "max. $\eta$", "Events", etabins
+            , ['signal', 'background'])
+    '''
+    print ("Getting signal probs.")
+    for n, s in enumerate(sig_train):
+        prob = classifier.predict_proba(s.reshape(1,-1))[0][1]
         probabilitiesSig.append(prob)
         totalDataSig.append(s)
-    for b in bkg_train:
-        b = scaler.transform([b])
-        prob = classifier.predict_proba(b)[0][0]
-        b = b[0].flatten().tolist()
+        if n%100==0:
+            print (prob)
+            print (classifier.predict_proba(s.reshape(1,-1)))
+    print ("Getting background probs.")
+    for n, b in enumerate(bkg_train):
+        prob = classifier.predict_proba(b.reshape(1,-1))[0][1]
         probabilitiesBkg.append(prob)
         totalDataBkg.append(b)
+        if n%100==0:
+            print (prob)
+            print (classifier.predict_proba(b.reshape(1,-1)))
 
     # initialize a list to store the loss value for each epoch
     lossHistory = []
@@ -99,7 +167,7 @@ def perform():
     train = train[s]
 
     # Initialise model
-    model = Model(len(train[0]), 1)
+    model = BaseModel(len(train[0]), 1)
     if len(layerSizes) == 1:
         model.add_layer(1)
     else:
@@ -127,15 +195,11 @@ def perform():
     test_probabilitiesSig = []
     test_probabilitiesBkg = []
     for s in sig_test:
-        s = scaler.transform([s])
-        prob = classifier.predict_proba(s)[0][0]
-        s = s[0].flatten().tolist()
+        prob = classifier.predict_proba(s.reshape(1, -1))[0][1]
         test_probabilitiesSig.append(prob)
         testDataSig.append(s)
     for b in bkg_test:
-        b = scaler.transform([b])
-        prob = classifier.predict_proba(b)[0][0]
-        b = b[0].flatten().tolist()
+        prob = classifier.predict_proba(b.reshape(1, -1))[0][1]
         test_probabilitiesBkg.append(prob)
         testDataBkg.append(b)
 
@@ -159,6 +223,13 @@ def perform():
         comp_true.extend(batchY)
 
     acc = round(1.0-(np.mean(np.array(comp_preds)-np.array(comp_true))), 2)
+    print ("Sample of true values:")
+    print (comp_true[:5])
+    print (comp_true[-5:])
+    print ("Sample of drone values:")
+    print (comp_preds[:5])
+    print (comp_preds[-5:])
+    
     print("Accuracy = %.2f" % (1.0-(np.mean(np.array(comp_preds)-np.array(comp_true)))))
     return acc
 
