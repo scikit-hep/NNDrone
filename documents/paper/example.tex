@@ -136,8 +136,14 @@ epochs = epochNum, validation_data = (setTest, labels),
 callbacks = [earlystop])
 \end{lstlisting}
 
-The training data is preprared as describred in Sec. 3.1 of~\cite{Komiske:2016rsd}. However,
-a further step is added where the images are projected in two 1-D projections each and
+The training data is prepared as described in Sec. 3.1 of~\cite{Komiske:2016rsd}. Four images
+in two dimensions (azimuthal angle, $\phi$, and rapidity, $\eta$) are created from the multiplicity and
+transverse energy of charged and neutral particles. The resulting images are centred and
+cropped in a region $\eta$, $\phi$ $\in (-0.4, 0.4)$. Finally the images are normalised
+(pixel intensities sum to 1, $\sum_{ij} I_{ij} = 1$), zero-centred (normalised mean subtracted
+from pixel intensity, $I_{ij}^{'} = I_{ij} - \mu_{ij}$) and standardised (divide pixel intensity
+by the standard deviation, $I^{''}_{ij} = I^{'}_{ij} / (\sigma_{ij} + r)$, $r = 10^-5$).
+Finally, a further step is added where the images are projected in two 1-D projections each and
 four channels are considered: charged \& neutral particle transverse energy and charged \& neutral
 particle multiplicity. The resulting 1-D feature vector is appended with some
 total kinematic properties such as the $K_t$ of the jet, its momentum, energy, mass,

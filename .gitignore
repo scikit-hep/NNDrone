@@ -10,4 +10,5 @@
 *DS_Store
 *.iml
 *.so
+*.synctex.gz
 main.pdf
