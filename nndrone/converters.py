@@ -11,7 +11,7 @@ class DontCacheRef(Exception):
     pass
 
 class BasicConverter(object):
-    def __init__(self, learning_rate = 0.05, batch_size = 1, num_epochs = 300, threshold = 0.02, add_layer_dynamic = False, layer_to_expand = 0):
+    def __init__(self, learning_rate = 0.05, batch_size = 1, num_epochs = 300, threshold = 0.02, add_layer_dynamic = False, layer_to_expand = 0, base_model = ""):
         # training control
         self._learning_rate = learning_rate
         self._batchSize = batch_size
@@ -25,6 +25,7 @@ class BasicConverter(object):
         self._losses = []
         self._updates = []
         self._epoch = 0
+        self._base_model = base_model
 
 
     def losses(self):
@@ -46,7 +47,7 @@ class BasicConverter(object):
         f_train.close()
 
 
-    def get_refs(self, base_model, datapoints, scaler = None, conv_1d = False, conv_2d = False, cache_data = True):
+    def get_refs(self, datapoints, scaler = None, conv_1d = False, conv_2d = False, cache_data = True):
         try:
             if not cache_data:
                 raise DontCacheRef()
@@ -65,12 +66,12 @@ class BasicConverter(object):
                     spoint = scaler.transform([point])
                 prob = 0.0
                 if conv_1d:
-                    prob = base_model.predict_proba(np.expand_dims(np.expand_dims(spoint, axis = 2), axis = 0))[0][0]
+                    prob = self._base_model.evaluate(spoint, conv1d=True)
                 elif conv_2d:
                     # this will match if original model was trained with correct dimensionality
-                    prob = base_model.predict_proba(np.expand_dims(spoint, axis = 0))
+                    prob = self._base_model.evaluate(spoint, conv2d=True)
                 else:
-                    prob = base_model.predict_proba(spoint.reshape(1, -1))[0][0]
+                    prob = self._base_model.evaluate(spoint)
                 refs.append(prob)
                 flattened.append(spoint.flatten().tolist())
             self.__datapoints = np.asarray(flattened)
@@ -80,7 +81,7 @@ class BasicConverter(object):
 
     def convert_model(self, drone_model, base_model, datapoints, scaler = None, conv_1d = False, conv_2d = False, cache_data = True, epoch_reset = False):
         # Get the list of reference outputs for the base model
-        datapoints_for_drone, refs = self.get_refs(base_model, datapoints, scaler, conv_1d, conv_2d, cache_data)
+        datapoints_for_drone, refs = self.get_refs(datapoints, scaler, conv_1d, conv_2d, cache_data)
         inflate = 0  # to inflate the learning without change iterations
         if epoch_reset:
             self._epoch = 0
@@ -146,7 +147,7 @@ class BasicConverter(object):
 
 
 class AdvancedConverter(object):
-    def __init__(self, learning_rate = 0.05, batch_size = 1, num_epochs = 300, threshold = 0.02, add_layer_dynamic = False, layer_to_expand = None):
+    def __init__(self, learning_rate = 0.05, batch_size = 1, num_epochs = 300, threshold = 0.02, add_layer_dynamic = False, layer_to_expand = None, base_model=""):
         # training control
         self._learning_rate = learning_rate
         self._batchSize = batch_size
@@ -157,6 +158,8 @@ class AdvancedConverter(object):
         if layer_to_expand is None:
             self.__round_robin = True
         self._layer_to_expand = int(layer_to_expand) if layer_to_expand is not None else None
+        self._base_model = base_model
+        
         # training history
         self._updatedLoss = 1000.0
         self._diffs = []
@@ -191,7 +194,7 @@ class AdvancedConverter(object):
         f_train.close()
 
 
-    def get_refs(self, base_model, datapoints, scaler = None, cache_data = True):
+    def get_refs(self, datapoints, scaler = None, cache_data = True):
         try:
             if not cache_data:
                 raise DontCacheRef()
@@ -204,7 +207,7 @@ class AdvancedConverter(object):
             if scaler:
                 datapoints_for_drone = scaler.transform(datapoints)
             for point in datapoints_for_drone:
-                prob = base_model.predict_proba(point)
+                prob = self._base_model.evaluate(raw=True)
                 refs.append(prob)
             self.__datapoints = datapoints_for_drone
             self.__refs = refs
@@ -212,7 +215,7 @@ class AdvancedConverter(object):
 
     def convert_model(self, drone_model, base_model, datapoints, scaler = None, cache_data = True, epoch_reset = False):
         # Get the list of reference outputs for the base model
-        datapoints_for_drone, refs = self.get_refs(base_model, datapoints, scaler, cache_data)
+        datapoints_for_drone, refs = self.get_refs(datapoints, scaler, cache_data)
         inflate = 0  # to inflate the learning without change iterations
         if epoch_reset:
             self._epoch = 0
