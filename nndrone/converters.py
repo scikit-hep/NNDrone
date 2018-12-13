@@ -3,15 +3,21 @@ import pickle
 import math
 
 try:
+    from wrappers import check_model
+except ImportError as e:
+    from nndrone.wrappers import check_model
+
+try:
     from utilities import dot_loss, next_batch
-except ImportError:
+except ImportError as e:
     from utilities.utilities import dot_loss, next_batch
 
 class DontCacheRef(Exception):
     pass
 
 class BasicConverter(object):
-    def __init__(self, learning_rate = 0.05, batch_size = 1, num_epochs = 300, threshold = 0.02, add_layer_dynamic = False, layer_to_expand = 0, base_model = ""):
+    def __init__(self, learning_rate = 0.05, batch_size = 1, num_epochs = 300, threshold = 0.02,
+                 add_layer_dynamic = False, layer_to_expand = 0, base_model = None):
         # training control
         self._learning_rate = learning_rate
         self._batchSize = batch_size
@@ -19,13 +25,14 @@ class BasicConverter(object):
         self._threshold = threshold
         self._add_layer_dynamic = add_layer_dynamic
         self._layer_to_expand = int(layer_to_expand)
+        if base_model is not None:
+            self.set_base_model(base_model)
         # training history
         self._updatedLoss = 1000.0
         self._diffs = []
         self._losses = []
         self._updates = []
         self._epoch = 0
-        self._base_model = base_model
 
 
     def losses(self):
@@ -47,7 +54,22 @@ class BasicConverter(object):
         f_train.close()
 
 
-    def get_refs(self, datapoints, scaler = None, conv_1d = False, conv_2d = False, cache_data = True):
+    def set_base_model(self, base_model):
+        check = check_model(base_model)
+        if check is not None:
+            self._base_model = check
+        else:
+            raise ValueError('Base model passed to converter is not compatible')
+
+
+    def base_model(self):
+        try:
+            return self._base_model
+        except AttributeError as e:
+            print('Base model was not supplied')
+            raise e
+
+    def get_refs(self, datapoints, scaler = None, cache_data = True):
         try:
             if not cache_data:
                 raise DontCacheRef()
@@ -55,33 +77,21 @@ class BasicConverter(object):
             return (self.__datapoints, self.__refs)
         except (DontCacheRef, AttributeError) as e:
             # Create the list of reference outputs for the base model
-            if conv_1d and conv_2d:
-                print('ERROR: conv_1d and conv_2d are mutually exclusive')
-                return None
-            refs = []
-            flattened = []
-            for point in datapoints:
-                spoint = point
-                if scaler and not conv_2d:
-                    spoint = scaler.transform([point])
-                prob = 0.0
-                if conv_1d:
-                    prob = self._base_model.evaluate(spoint, conv1d=True)
-                elif conv_2d:
-                    # this will match if original model was trained with correct dimensionality
-                    prob = self._base_model.evaluate(spoint, conv2d=True)
-                else:
-                    prob = self._base_model.evaluate(spoint)
-                refs.append(prob)
-                flattened.append(spoint.flatten().tolist())
-            self.__datapoints = np.asarray(flattened)
+            dpoints = np.asarray(datapoints)
+            if scaler is not None:
+                dpoints = scaler.transform(dpoints)
+            refs = self.base_model().evaluate(dpoints)
+            self.__datapoints = dpoints.reshape(dpoints.shape[0], -1)
             self.__refs = np.asarray(refs)
             return (self.__datapoints, self.__refs)
 
 
-    def convert_model(self, drone_model, base_model, datapoints, scaler = None, conv_1d = False, conv_2d = False, cache_data = True, epoch_reset = False):
+    def convert_model(self, drone_model, datapoints, base_model = None, scaler = None,
+                      cache_data = True, epoch_reset = False):
+        if base_model is not None:
+            self.set_base_model(base_model)
         # Get the list of reference outputs for the base model
-        datapoints_for_drone, refs = self.get_refs(datapoints, scaler, conv_1d, conv_2d, cache_data)
+        datapoints_for_drone, refs = self.get_refs(datapoints, scaler, cache_data)
         inflate = 0  # to inflate the learning without change iterations
         if epoch_reset:
             self._epoch = 0
@@ -147,7 +157,8 @@ class BasicConverter(object):
 
 
 class AdvancedConverter(object):
-    def __init__(self, learning_rate = 0.05, batch_size = 1, num_epochs = 300, threshold = 0.02, add_layer_dynamic = False, layer_to_expand = None, base_model=""):
+    def __init__(self, learning_rate = 0.05, batch_size = 1, num_epochs = 300, threshold = 0.02,
+                 add_layer_dynamic = False, layer_to_expand = None, base_model = None):
         # training control
         self._learning_rate = learning_rate
         self._batchSize = batch_size
@@ -158,8 +169,8 @@ class AdvancedConverter(object):
         if layer_to_expand is None:
             self.__round_robin = True
         self._layer_to_expand = int(layer_to_expand) if layer_to_expand is not None else None
-        self._base_model = base_model
-        
+        if base_model is not None:
+            self.set_base_model(base_model)
         # training history
         self._updatedLoss = 1000.0
         self._diffs = []
@@ -194,6 +205,22 @@ class AdvancedConverter(object):
         f_train.close()
 
 
+    def set_base_model(self, base_model):
+        check = check_model(base_model)
+        if check is not None:
+            self._base_model = check
+        else:
+            raise ValueError('Base model passed to converter is not compatible')
+
+
+    def base_model(self):
+        try:
+            return self._base_model
+        except AttributeError as e:
+            print('Base model was not supplied')
+            raise e
+
+
     def get_refs(self, datapoints, scaler = None, cache_data = True):
         try:
             if not cache_data:
@@ -202,18 +229,18 @@ class AdvancedConverter(object):
             return (self.__datapoints, self.__refs)
         except(DontCacheRef, AttributeError) as e:
             # Create the list of reference outputs for the base model
-            refs = []
-            datapoints_for_drone = datapoints
+            dpoints = np.asarray(datapoints)
             if scaler:
-                datapoints_for_drone = scaler.transform(datapoints)
-            for point in datapoints_for_drone:
-                prob = self._base_model.evaluate(raw=True)
-                refs.append(prob)
-            self.__datapoints = datapoints_for_drone
+                dpoints = scaler.transform(dpoints)
+            refs = self.base_model().evaluate(dpoints, raw = True)
+            self.__datapoints = dpoints
             self.__refs = refs
             return (self.__datapoints, self.__refs)
 
-    def convert_model(self, drone_model, base_model, datapoints, scaler = None, cache_data = True, epoch_reset = False):
+    def convert_model(self, drone_model, datapoints, base_model = None, scaler = None,
+                      cache_data = True, epoch_reset = False):
+        if base_model is not None:
+            self.set_base_model(base_model)
         # Get the list of reference outputs for the base model
         datapoints_for_drone, refs = self.get_refs(datapoints, scaler, cache_data)
         inflate = 0  # to inflate the learning without change iterations

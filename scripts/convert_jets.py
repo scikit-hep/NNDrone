@@ -186,7 +186,7 @@ drone.add_layer(675)
 drone.add_layer(1)
 
 conv = BasicConverter(num_epochs = epochNum, threshold = threshold)
-drone = conv.convert_model(drone, model, all_data, conv_2d = True)
+drone = conv.convert_model(drone, all_data, base_model = model)
 conv.save_history('./converted_hist.pkl')
 
 drone.save_model('./converted_drone.pkl')

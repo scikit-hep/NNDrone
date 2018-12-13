@@ -177,7 +177,7 @@ def perform():
     model.print_layers()
 
     print("Starting stochastic conversion...")
-    converter.convert_model(model, classifier, train)
+    converter.convert_model(model, train, base_model=classifier)
     losses = converter.losses()
     diffs = converter.diffs()
     updates = converter.updates()

@@ -202,7 +202,7 @@ drone.add(Dense(50, activation = relu))
 drone.add(Dense(1, activation = sigmoid))
 
 conv = AdvancedConverter(num_epochs = epochNum, threshold = threshold, batch_size = 10)
-drone = conv.convert_model(drone, model, all_data)
+drone = conv.convert_model(drone, all_data, base_model = model)
 conv.save_history('./converted_hist.pkl')
 
 drone.save_model('./converted_drone.pkl')
