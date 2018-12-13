@@ -3,12 +3,12 @@ import numpy as np
 
 try:
     from sklearn.neural_network import MLPClassifier
-else:
+except:
     MLPClassifier = None
 
 try:
     from keras.models import Model as KModel
-else:
+except:
     KModel = None
 
 
