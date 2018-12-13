@@ -3,6 +3,7 @@ from setuptools import setup, find_packages
 
 pkgs = None
 if sys.version_info >= (3, 3):
+    from setuptools import find_namespace_packages
     pkgs = find_namespace_packages(include=['nndrone*', 'utilities*'])
 else:
     pkgs = find_packages(include=['nndrone*', 'utilities*'])
