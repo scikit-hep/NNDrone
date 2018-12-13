@@ -1,9 +1,9 @@
 import pickle
 import numpy as np
 try:
-    from utilities import sigmoid_activation, sigmoid_prime, cost_derivative, inv_sigmoid_activation, get_class
+    from utilities import sigmoid_activation, sigmoid_prime, cost_derivative, inv_sigmoid_activation
 except ImportError:
-    from utilities.utilities import sigmoid_activation, sigmoid_prime, cost_derivative, inv_sigmoid_activation, get_class
+    from utilities.utilities import sigmoid_activation, sigmoid_prime, cost_derivative, inv_sigmoid_activation
 
 try:
     from activations import cross_entropy
