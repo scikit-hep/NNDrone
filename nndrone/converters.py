@@ -70,7 +70,8 @@ class BasicConverter(object):
                     # this will match if original model was trained with correct dimensionality
                     prob = base_model.predict_proba(np.expand_dims(spoint, axis = 0))
                 else:
-                    prob = base_model.predict_proba(spoint.reshape(1, -1))[0][0]
+                    prob = base_model.predict_proba(np.expand_dims(spoint.reshape(1, -1), axis=2))[0]
+                    #prob = base_model.predict_proba(spoint.reshape(1, -1))[0][0]
                 refs.append(prob)
                 flattened.append(spoint.flatten().tolist())
             self.__datapoints = np.asarray(flattened)
