@@ -1,8 +1,8 @@
 \section{Introduction}
 \label{sec:intro}
 
-Data-collection rates in high energy physics (HEP), particularly those at the Large Hadron Collider (LHC),
-are a continuing challenge and require large amounts of computing power to process.
+Data-collection rates in high energy physics (HEP) experiments, particularly those at the Large Hadron Collider (LHC),
+are a continuing challenge and resulting datasets require large amounts of computing power to process.
 For example, the \lhcb experiment~\cite{Alves:2008zz} processes an event rate of 1\mhz in a software-based
 trigger~\cite{LHCb-DP-2014-002}. The purpose of this trigger is to reduce the output
 data rate to manageable levels, \ie to fit in the available storage resources offline.
@@ -14,22 +14,22 @@ be saved, and not the raw data from the sub-detectors.
 The aforementioned data-reduction strategy is similar across all LHC experiments, where
 software based selections are applied in low-latency environments.
 
-Machine learning (ML) is becoming an evermore important tool for data reduction,
+Machine learning (ML) is becoming an increasingly important tool to filter datasets,
 be it with the identification of interesting event topologies, or the distinction
 between individual particle species. For the case of \lhcb data-taking, over 600
 unique signatures are searched for in parallel in real time, each with its own set of requirements.
 However only a handful at present make use of machine learning.
 
-A large ecosystem is available for analysts to create machine learning classifiers,
+A large ecosystem is available for analysts to create machine learning classifiers;
 the TMVA~\cite{Hocker:2007ht} and Neurobayes~\cite{Feindt:2006pm} tools being among the most widely used.
 More recent examples gaining popularity include Scikit-Learn~\cite{Pedregosa:2012toh}
 and Keras~\cite{keras}. It has been proven in many LHC analyses that
 ML classifiers account for differences in the correlations of
 training variables between signal and background events, therefore enabling more
 powerful data reduction.
-Despite this, the majority of the signal isolation is performed
+Despite this, the majority of searches for interesting signatures are performed
 without the use of ML classifiers. Often the reason for this is the relative difficulty in
-the application of a preferred ML classifier to the {\tt C++/Python} combination
+the implementation of a preferred ML classifier to the {\tt C++/Python} combination
 of event selection frameworks~\cite{Barrand:2001ny}. Another
 reason is the required algorithm speed. Methods such as Bonsai
 Boosted Decision Trees (BBDTs)~\cite{Gligorov:2012qt} have been developed in order

@@ -34,9 +34,9 @@ $i$ of the mini-batch, respectively. The advantage of such a loss function is pe
 equivalence of the original and drone model, in addition to equivalence
 of performance. For the drone training detailed in this article, standard
 mini-batch stochastic gradient descent is used. A feature of this method
-is that the drone classifier does not see any training data,
-but rather learns the same properties from the original classifier,
-and thus is a neural network that learns from another neural network in an
+is that the drone classifier does not see the labels of the training data,
+but rather learns the same properties from the original classifier.
+This is therefore a neural network that learns from another neural network in an
 empirical manner.
 
 \subsection{Model morphing during the learning phase}

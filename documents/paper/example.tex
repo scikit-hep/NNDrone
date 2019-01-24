@@ -13,11 +13,10 @@ the $\Dz\to\pi\pi\pi\pi$ decay. A total of 10000 candidates is generated for eac
 \subsubsection{Training of the original classifier}
 \label{sec:orig_training}
 
-%The machine learning classifier chosen is the Multi-layer perceptron of SciKit-Learn,
-%which is constructed as
-The machine learning classifier, using the Keras framework~\cite{keras},
-is constructed as
-which is constructed as
+The machine learning classifier, using the Keras framework~\cite{keras,adam},
+is constructed as a locally connected first layer (in which filters are applied
+to different regions in contrast to a full convolution layer), followed by a pooling layer,
+and a standard dense layer. The exact definition can be found below.
 \begin{lstlisting}
 classifier = Sequential()
 classifier.add(LocallyConnected1D(
@@ -31,19 +30,6 @@ classifier.compile(optimizer = 'adam',
 loss = 'binary_crossentropy'
 , metrics = ['accuracy'])
 \end{lstlisting}
-%\begin{lstlisting}
-%classifier = MLPClassifier(activation='relu',
-%    batch_size='auto', beta_1=0.9, beta_2=0.999,
-%    early_stopping=False, epsilon=1e-08,
-%    hidden_layer_sizes=(3, 3),
-%    learning_rate='constant',
-%    learning_rate_init=0.001, max_iter=200,
-%    nesterovs_momentum=True, power_t=0.5,
-%    random_state=1, shuffle=True,
-%    solver='lbfgs', tol=0.0001, momentum=0.9,
-%    validation_fraction=0.1, verbose=False,
-%    warm_start=False, alpha=1e-05)
-%\end{lstlisting}
 
 The neural network is trained using kinematic properties of the respective decays.
 These include the pseudorapidity, $\eta$, and momentum transverse to the direction of the
@@ -93,11 +79,12 @@ The jets themselves are reconstructed in the Rivet analysis framework~\cite{Buck
 and are created using the FastJet~\cite{Cacciari:2011ma} package using the $K_t$ algorithm~\cite{Salam:2007xv}
 (the definition
 of the $K_t$ variable and a review of jet reconstruction algorithms
-may be found in Ref.~\cite{Atkin:2015msa}).
+may be found in Refs~\cite{kt} and \cite{Atkin:2015msa} respectively).
 A jet \pt requirement of 20\gev is imposed on all jets.
 All other parameters remain at the default values for Rivet version 2.5.4.
-The signal sample is chosen to correspond to a $qg\to qg$ type of interaction,
-whereas the background is chosen to correspond to a $gg \to gg$ type.
+The signal sample is chosen to correspond to a $qg\to Wq$ type of interaction,
+whereas the background is chosen to correspond to a $gg \to gg$ type. These correspond
+to the Rivet analyses named {\tt MC\_WJETS} and {\tt MC\_QCD}, respectively.
 Jets that originate from gluons in the final state form a background to many
 analyses, therefore efficient rejection of such processes is important in making
 measurements~\cite{Komiske:2016rsd}.
@@ -105,71 +92,59 @@ measurements~\cite{Komiske:2016rsd}.
 \subsubsection{Training of the original classifier}
 
 The machine learning classifier chosen is also a Keras-based convolutional neural net,
-constructed in an similar way as described in Sec~\ref{sec:orig_training}.
+constructed in an similar way as described in Sec~\ref{sec:orig_training}
 \begin{lstlisting}
 classifier = Sequential()
 classifier.add(LocallyConnected1D(
-filters = 32, kernel_size = 2,
-activation = 'relu', input_shape = sig_data[0].shape))
-classifier.add(MaxPooling1D(pool_size = 3,
-strides = 1))
-classifier.add(Dropout(0.25))
-classifier.add(Conv1D(filters = 32, kernel_size = 3,
-activation = 'relu'))
-classifier.add(MaxPooling1D(pool_size = 2,
-strides = 2))
-classifier.add(Dropout(0.25))
-classifier.add(Conv1D(filters = 32, kernel_size = 2,
-activation = 'relu'))
-classifier.add(MaxPooling1D(pool_size = 2,
-strides = 2))
-classifier.add(Dropout(0.5))
-classifier.add(Flatten())
-classifier.add(Dense(50, activation = 'relu'))
+filters = 90, kernel_size = 2,
+activation = 'sigmoid',
+input_shape = (len(setTrain[0]), 1)))
+classifier.add(GlobalMaxPooling1D())
+classifier.add(Dense(30, activation = 'sigmoid'))
 classifier.add(Dense(1, activation = 'sigmoid'))
 classifier.compile(optimizer = 'adam',
 loss = 'binary_crossentropy'
 , metrics = ['accuracy'])
-earlystop = EarlyStopping(patience = 3)
-model.fit(setTrain, labels, batch_size = batchSize,
-epochs = epochNum, validation_data = (setTest, labels),
-callbacks = [earlystop])
 \end{lstlisting}
 
-The training data is prepared as described in Sec. 3.1 of~\cite{Komiske:2016rsd}. Four images
-in two dimensions (azimuthal angle, $\phi$, and rapidity, $\eta$) are created from the multiplicity and
-transverse energy of charged and neutral particles. The resulting images are centred and
-cropped in a region $\eta$, $\phi$ $\in (-0.4, 0.4)$. Finally the images are normalised
-(pixel intensities sum to 1, $\sum_{ij} I_{ij} = 1$), zero-centred (normalised mean subtracted
-from pixel intensity, $I_{ij}^{'} = I_{ij} - \mu_{ij}$) and standardised (divide pixel intensity
-by the standard deviation, $I^{''}_{ij} = I^{'}_{ij} / (\sigma_{ij} + r)$, $r = 10^-5$).
-Finally, a further step is added where the images are projected in two 1-D projections each and
-four channels are considered: charged \& neutral particle transverse energy and charged \& neutral
-particle multiplicity. The resulting 1-D feature vector is appended with some
-total kinematic properties such as the $K_t$ of the jet, its momentum, energy, mass,
-multiplicity, etc. - producing a total of 140 individual features.
-% The neural network is trained using 4 jet properties consisting of the energy,
-% the combined mass of the particles in the jet, the pseudorapidity, and the jet $K_t$.
+The training data is based around the properties of the measured jets. The list of features
+taken consists of the azimuthal angle, $\phi$, $\eta$ of the jet; the spread of neutral and 
+hadronic contributions to the jet in the $\phi$, $\eta$ variables, along with average and energy weighted
+kinematic variables. In total 17 different features are used.
 The signal and background distributions of the input variables
 are shown in Fig.~\ref{fig:inputsGPD}.
 %
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.33\textwidth]{et_comp_gpd}
-\includegraphics[width=0.33\textwidth]{eta_comp_gpd}
-\includegraphics[width=0.33\textwidth]{m_comp_gpd}
-\includegraphics[width=0.33\textwidth]{kt_comp_gpd}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_eta}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_eta_spread_charged}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_eta_spread_neutral}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_phi}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_phi_spread_charged}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_phi_spread_neutral}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_hAvEta}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_hAvPhi}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_hEnergy}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_hSumPT}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_nAvEta}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_nAvPhi}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_nEnergy}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_nSumPT}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_kt2}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_mass}
+\includegraphics[width=0.33\textwidth]{gpd_inputs/input_gpd_mom}
 \caption{\small Comparison of the signal and background distributions
-used to train the Keras classifier .}
+used to train the Keras jet separation classifier.}
 \label{fig:inputsGPD}
 \end{figure*}
 
 \subsection{Drone conversions}
 
 The drone neural networks are trained following the procedure outlined in Sec.~\ref{sec:dlearn},
-In total, 1500 epochs are used with
+In total, 300 epochs are used with
 the learning rate of the stochastic gradient descent set to 0.05.
-The value of $\kappa$ is chosen to be 0.01.
+The value of $\kappa$ is chosen to be 0.02, the value of $b$ is chosen to
+be 0.04 and the value of $m$ is chosen to be 50.
 
 The loss history of the drone approximations are shown in Fig.~\ref{fig:loss}
 as a function of epoch number.
@@ -177,9 +152,10 @@ The convergence is also shown in Fig.~\ref{fig:iterdiff}, which shows
 the difference in the value of the loss function with respect to the previous
 epoch. The epochs that trigger an increase in the number of hyperparameters
 are also overlaid.
-In total for the case of B decays, an increase was triggered 38 times compared to 67 times for the
-jet separation classifier. The total number
-of parameters in the final drone neural networks are therefore 302 and 10152 for the B decay drone
+In total for the case of B decays and for the case of the jet separation classifier, 
+an increase was triggered 10 times.
+The total number
+of parameters in the final drone neural networks are therefore 121 and 286 for the B decay drone
 and the jet separation drone, respectively. It is interesting
 to note that with the algorithm design of Sec.~\ref{sec:dlearn}, the introduction
 of the new parameter space causes the drone networks to learn faster, as evidenced by
@@ -252,7 +228,7 @@ The identical performance show in Fig.~\ref{fig:roc} is clearly the ideal scenar
 such good agreement is not always required to give better results than other low-latency methods.
 However it is worth noting that the drones created in the examples of Sec.~\ref{sec:hep} are faster to
 evaluate. The comparison of the time taken for each model evaluation, determined from a desktop
-using a Intel Core i7-4770 processor is shown in Table~\ref{tab:comp}.
+using a Intel Core i5-7267U processor is shown in Table~\ref{tab:comp}.
 \begin{table}[t]
   \centering
   \caption{Hyperparameter number comparisons of the original models and drone
@@ -260,8 +236,8 @@ using a Intel Core i7-4770 processor is shown in Table~\ref{tab:comp}.
   \begin{tabular}{l|rr}
                    & original model                  & drone \\
     \hline
-    B decay        & 4,111 & 302 \\
-    jet separation & 71,429 & 10152 \\
+    B decay        & 4,111 & 121 \\
+    jet separation & 7081 & 286 \\
   \end{tabular}
 \end{table}
 
@@ -272,7 +248,7 @@ using a Intel Core i7-4770 processor is shown in Table~\ref{tab:comp}.
   \begin{tabular}{l|rr}
                    & original model                  & drone \\
     \hline
-    B decay        & $19.3 \pm 0.2 \times 10^{-5}$ s & $2.7 \pm 0.2 \times 10^{-5}$ s \\
-    jet separation &  $3.2 \pm 0.2 \times 10^{-3}$ s & $4.3 \pm 0.2 \times 10^{-4}$ s \\
+    B decay        & $3.87 \times 10^{-4}$ s & $4.8 \times 10^{-5}$ s \\
+    jet separation & $4.79 \times 10^{-4}$ s & $6.2 \times 10^{-5}$ s \\
   \end{tabular}
 \end{table}
