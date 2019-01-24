@@ -4,7 +4,7 @@ colours_list = ['blue', 'red', 'green', 'purple']
 colours_list = ['xkcd:'+k for k in colours_list]
 
 
-def hd_hist(data, name, x_range, y_range, xname, yname, bins, labels):
+def hd_hist(data, name, x_range, y_range, xname, yname, bins, labels, legend=False):
     for c, d in enumerate(data):
         plt.hist(d
                  , bins=bins
@@ -16,7 +16,8 @@ def hd_hist(data, name, x_range, y_range, xname, yname, bins, labels):
     plt.ylim(y_range)
     plt.xlabel(xname)
     plt.ylabel(yname)
-    plt.legend(loc='upper right')
+    if legend:
+        plt.legend(loc='upper right')
     plt.savefig(name)
     plt.clf()
 
