@@ -1,11 +1,12 @@
 import sys
-from setuptools import setup, find_packages
+from setuptools import setup
+try:
+    from setuptools import find_namespace_packages as findPKGs
+except ImportError:
+    from setuptools import find_packages as findPKGs
 
 pkgs = None
-if sys.version_info >= (3, 3):
-    pkgs = find_namespace_packages(include=['nndrone*', 'utilities*'])
-else:
-    pkgs = find_packages(include=['nndrone*', 'utilities*'])
+pkgs = findPKGs(include=['nndrone*', 'utilities*'])
 
 setup(
    name='nndrone',
