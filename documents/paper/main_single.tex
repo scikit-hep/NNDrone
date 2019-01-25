@@ -946,6 +946,7 @@
 \usepackage{color}
 \usepackage{colortbl}
 \graphicspath{{./figs/}} % Make Latex search fig subdir for figures
+\graphicspath{{./figs/gpd_inputs/}} % Make Latex search fig subdir for figures
 
 \usepackage{amsmath}
 \usepackage{amssymb}
@@ -1036,45 +1037,45 @@ end#1\endcsname
   classifier, such that different classifiers may be standardised into a single form and executed
   in parallel. We demonstrate the capability of the drone neural network
   to learn the required properties of the input neural network without
-  the use of any training data, only using appropriate questioning of the input neural network.
+  the use of any labels from the training data, only using appropriate questioning of the input neural network.
 \end{abstract}
 \end{frontmatter}
 
 \section{Introduction}
 \label{sec:intro}
 
-Data collection rates in high energy physics (HEP), particularly those at the Large Hadron Collider (LHC)
-are a continuing challenge and require large amounts of computing power to handle.
-For example, the \lhcb experiment~\cite{Alves:2008zz} at the LHC processes an event rate of 1\mhz in a software
-based trigger~\cite{LHCb-DP-2014-002}. The purpose of this trigger is to reduce the output
+Data-collection rates in high energy physics (HEP) experiments, particularly those at the Large Hadron Collider (LHC),
+are a continuing challenge and resulting datasets require large amounts of computing power to process.
+For example, the \lhcb experiment~\cite{Alves:2008zz} processes an event rate of 1\mhz in a software-based
+trigger~\cite{LHCb-DP-2014-002}. The purpose of this trigger is to reduce the output
 data rate to manageable levels, \ie to fit in the available storage resources offline.
 This amounts to a reduction from 60\,GB per second to an output data rate of 0.6\,GB per second.
 In order to accomplish such a remarkable real-time data reduction in the software based trigger,
 novel ideas have been introduced, such as the real-time alignment and calibration of the detector~\cite{Xu:2016mik},
 in addition to the concept of real-time analysis~\cite{Aaij:2016rxn}, whereby a subset of the particles from the proton collisions need only
-be saved, and not the detector raw data.
+be saved, and not the raw data from the sub-detectors.
 The aforementioned data-reduction strategy is similar across all LHC experiments, where
 software based selections are applied in low-latency environments.
 
-Machine learning (ML) is becoming an evermore important tool in the data reduction,
+Machine learning (ML) is becoming an increasingly important tool to filter datasets,
 be it with the identification of interesting event topologies, or the distinction
 between individual particle species. For the case of \lhcb data-taking, over 600
-unique signitures are searched for in parallel in real time, each with its own set of requirements.
+unique signatures are searched for in parallel in real time, each with its own set of requirements.
 However only a handful at present make use of machine learning.
 
-A large ecosystem is available to analysts in the creation of machine learning classifiers,
+A large ecosystem is available for analysts to create machine learning classifiers;
 the TMVA~\cite{Hocker:2007ht} and Neurobayes~\cite{Feindt:2006pm} tools being among the most widely used.
 More recent examples gaining popularity include Scikit-Learn~\cite{Pedregosa:2012toh}
 and Keras~\cite{keras}. It has been proven in many LHC analyses that
-ML classifiers are better able to account for differences in the correlations between
-training variables that are seen in signal and background events, enabling more
+ML classifiers account for differences in the correlations of
+training variables between signal and background events, therefore enabling more
 powerful data reduction.
-Despite this, the majority of the identification of interesting topologies is performed
+Despite this, the majority of searches for interesting signatures are performed
 without the use of ML classifiers. Often the reason for this is the relative difficulty in
-the application of a preferred ML classifier to the {\tt C++/Python} combination
+the implementation of a preferred ML classifier to the {\tt C++/Python} combination
 of event selection frameworks~\cite{Barrand:2001ny}. Another
 reason is the required algorithm speed. Methods such as Bonsai
-Boosted Decision Trees (BBDTs)~\cite{Gligorov:2012qt} have been implemented in order
+Boosted Decision Trees (BBDTs)~\cite{Gligorov:2012qt} have been developed in order
 to enable the quick evaluation of models. The BBDT approach relies on the
 discretization of inputs such that all possible combinations along with
 the associated classifier response is known before the model is evaluated.
@@ -1087,7 +1088,7 @@ given ML learning classifier from any chosen package such as SciKit-Learn or Ker
 The resulting parameters are then fed into a {\tt C++} algorithm that
 performs execution in HEP production environments. The details of the
 drone training are provided in Sec.~\ref{sec:dlearn}. This is followed
-by a real example using simulated data in Sec.~\ref{sec:hep}. The advantages
+by real examples using simulated data in Sec.~\ref{sec:hep}. The advantages
 of the approach are discussed in Sec.~\ref{sec:storage} and a summary is
 provided in Sec.~\ref{sec:summary}.
 
@@ -1108,7 +1109,7 @@ since the early 1990s~\cite{HORNIK1991251}.
 \subsection{Initial drone structure and corresponding training}
 
 The drone chosen for use in this article is initialised as a
-deep neural network with a single intermediate (hidden) layer of 5
+neural network with a single intermediate (hidden) layer of 5
 nodes using a standard sigmoid activation function. The network
 has the number of inputs determined from the number of desired
 characteristics of the decay signature. A single output is taken
@@ -1128,9 +1129,9 @@ $i$ of the mini-batch, respectively. The advantage of such a loss function is pe
 equivalence of the original and drone model, in addition to equivalence
 of performance. For the drone training detailed in this article, standard
 mini-batch stochastic gradient descent is used. A feature of this method
-is that the drone classifier does not see any training data,
-but rather learns the same properties from the original classifier,
-and thus is a neural network that learns from another neural network in an
+is that the drone classifier does not see the labels of the training data,
+but rather learns the same properties from the original classifier.
+This is therefore a neural network that learns from another neural network in an
 empirical manner.
 
 \subsection{Model morphing during the learning phase}
@@ -1192,10 +1193,10 @@ the $\Dz\to\pi\pi\pi\pi$ decay. A total of 10000 candidates is generated for eac
 \subsubsection{Training of the original classifier}
 \label{sec:orig_training}
 
-%The machine learning classifier chosen is the Multi-layer perceptron of SciKit-Learn,
-%which is constructed as
-The machine learning classifier chosen is a Keras-based convolutional neural net,
-which is constructed as
+The machine learning classifier, using the Keras framework~\cite{keras,adam},
+is constructed as a locally connected first layer (in which filters are applied
+to different regions in contrast to a full convolution layer), followed by a pooling layer,
+and a standard dense layer. The exact definition can be found below.
 \begin{lstlisting}
 classifier = Sequential()
 classifier.add(LocallyConnected1D(
@@ -1209,19 +1210,6 @@ classifier.compile(optimizer = 'adam',
 loss = 'binary_crossentropy'
 , metrics = ['accuracy'])
 \end{lstlisting}
-%\begin{lstlisting}
-%classifier = MLPClassifier(activation='relu',
-%    batch_size='auto', beta_1=0.9, beta_2=0.999,
-%    early_stopping=False, epsilon=1e-08,
-%    hidden_layer_sizes=(3, 3),
-%    learning_rate='constant',
-%    learning_rate_init=0.001, max_iter=200,
-%    nesterovs_momentum=True, power_t=0.5,
-%    random_state=1, shuffle=True,
-%    solver='lbfgs', tol=0.0001, momentum=0.9,
-%    validation_fraction=0.1, verbose=False,
-%    warm_start=False, alpha=1e-05)
-%\end{lstlisting}
 
 The neural network is trained using kinematic properties of the respective decays.
 These include the pseudorapidity, $\eta$, and momentum transverse to the direction of the
@@ -1231,12 +1219,12 @@ are shown in Fig.~\ref{fig:inputs}.
 %
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.33\textwidth]{pt_comp}
-\includegraphics[width=0.33\textwidth]{eta_comp}
-\includegraphics[width=0.33\textwidth]{minpt_comp}
-\includegraphics[width=0.33\textwidth]{maxpt_comp}
-\includegraphics[width=0.33\textwidth]{mineta_comp}
-\includegraphics[width=0.33\textwidth]{maxeta_comp}
+\includegraphics[width=0.33\textwidth]{pt_comp.pdf}
+\includegraphics[width=0.33\textwidth]{eta_comp.pdf}
+\includegraphics[width=0.33\textwidth]{minpt_comp.pdf}
+\includegraphics[width=0.33\textwidth]{maxpt_comp.pdf}
+\includegraphics[width=0.33\textwidth]{mineta_comp.pdf}
+\includegraphics[width=0.33\textwidth]{maxeta_comp.pdf}
 \caption{\small Comparison of the signal and background distributions
 used to train the Keras B decay classifier.}
 \label{fig:inputs}
@@ -1265,40 +1253,78 @@ reserved in order to test for overtraining.
 \subsubsection{Data sample}
 
 A further demonstration is provided demonstrating a classifiers ability to separate different
-kinds of jets. The data sample to show this has been generated from Pythia~\cite{Sjostrand:2007gs}, using the FastJet~\cite{Cacciari:2011ma} package
-to create the jet objects.
-The signal sample is chosen to be the jet produced in association with a W boson.
-The background sample is chosen to be jets from Quantum Chromodynamics processes.
+kinds of jets. The data sample to show this has been generated from Pythia~\cite{Sjostrand:2007gs}
+simulating pp collisions at 14\tev.
+The jets themselves are reconstructed in the Rivet analysis framework~\cite{Buckley:2010ar}
+and are created using the FastJet~\cite{Cacciari:2011ma} package using the $K_t$ algorithm~\cite{Salam:2007xv}
+(the definition
+of the $K_t$ variable and a review of jet reconstruction algorithms
+may be found in Refs~\cite{kt} and \cite{Atkin:2015msa} respectively).
+A jet \pt requirement of 20\gev is imposed on all jets.
+All other parameters remain at the default values for Rivet version 2.5.4.
+The signal sample is chosen to correspond to a $qg\to Wq$ type of interaction,
+whereas the background is chosen to correspond to a $gg \to gg$ type. These correspond
+to the Rivet analyses named {\tt MC\_WJETS} and {\tt MC\_QCD}, respectively.
+Jets that originate from gluons in the final state form a background to many
+analyses, therefore efficient rejection of such processes is important in making
+measurements~\cite{Komiske:2016rsd}.
 
 \subsubsection{Training of the original classifier}
 
 The machine learning classifier chosen is also a Keras-based convolutional neural net,
-constructed in an identical way as described in Sec~\ref{sec:orig_training}.
+constructed in an similar way as described in Sec~\ref{sec:orig_training}
+\begin{lstlisting}
+classifier = Sequential()
+classifier.add(LocallyConnected1D(
+filters = 90, kernel_size = 2,
+activation = 'sigmoid',
+input_shape = (len(setTrain[0]), 1)))
+classifier.add(GlobalMaxPooling1D())
+classifier.add(Dense(30, activation = 'sigmoid'))
+classifier.add(Dense(1, activation = 'sigmoid'))
+classifier.compile(optimizer = 'adam',
+loss = 'binary_crossentropy'
+, metrics = ['accuracy'])
+\end{lstlisting}
 
-The neural network is trained using 4 jet properties consisting of the energy,
-the combined mass of the particles in the jet, the pseudorapidity, and the jet $K_t$ (the definition
-of the $K_t$ variable and a review of jet reconstruction algorithms
-may be found in Ref.~\cite{Atkin:2015msa}).
+The training data is based around the properties of the measured jets. The list of features
+taken consists of the azimuthal angle, $\phi$, $\eta$ of the jet; the spread of neutral and 
+hadronic contributions to the jet in the $\phi$, $\eta$ variables, along with average and energy weighted
+kinematic variables. In total 17 different features are used.
 The signal and background distributions of the input variables
 are shown in Fig.~\ref{fig:inputsGPD}.
 %
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.33\textwidth]{et_comp_gpd}
-\includegraphics[width=0.33\textwidth]{eta_comp_gpd}
-\includegraphics[width=0.33\textwidth]{m_comp_gpd}
-\includegraphics[width=0.33\textwidth]{kt_comp_gpd}
+\includegraphics[width=0.33\textwidth]{input_gpd_eta.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_eta_spread_charged.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_eta_spread_neutral.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_phi.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_phi_spread_charged.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_phi_spread_neutral.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_hAvEta.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_hAvPhi.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_hEnergy.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_hSumPT.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_nAvEta.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_nAvPhi.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_nEnergy.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_nSumPT.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_kt2.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_mass.png}
+\includegraphics[width=0.33\textwidth]{input_gpd_mom.png}
 \caption{\small Comparison of the signal and background distributions
-used to train the Keras classifier .}
+used to train the Keras jet separation classifier.}
 \label{fig:inputsGPD}
 \end{figure*}
 
 \subsection{Drone conversions}
 
 The drone neural networks are trained following the procedure outlined in Sec.~\ref{sec:dlearn},
-In total, 1500 epochs are used with
+In total, 300 epochs are used with
 the learning rate of the stochastic gradient descent set to 0.05.
-The value of $\kappa$ is chosen to be 0.01.
+The value of $\kappa$ is chosen to be 0.02, the value of $b$ is chosen to
+be 0.04 and the value of $m$ is chosen to be 50.
 
 The loss history of the drone approximations are shown in Fig.~\ref{fig:loss}
 as a function of epoch number.
@@ -1306,9 +1332,10 @@ The convergence is also shown in Fig.~\ref{fig:iterdiff}, which shows
 the difference in the value of the loss function with respect to the previous
 epoch. The epochs that trigger an increase in the number of hyperparameters
 are also overlaid.
-In total for the case of B decays, an increase was triggered 38 times compared to 10 times for the
-jet separation classifier. The total number
-of parameters in the final drone neural networks are therefore 302 and 106 for the B decay drone
+In total for the case of B decays and for the case of the jet separation classifier, 
+an increase was triggered 10 times.
+The total number
+of parameters in the final drone neural networks are therefore 121 and 286 for the B decay drone
 and the jet separation drone, respectively. It is interesting
 to note that with the algorithm design of Sec.~\ref{sec:dlearn}, the introduction
 of the new parameter space causes the drone networks to learn faster, as evidenced by
@@ -1317,8 +1344,8 @@ increases in Fig.~\ref{fig:iterdiff} with continuing descent of the loss functio
 The performance of the original classifiers compared to the drone classifiers are shown in Figure~\ref{fig:roc}.
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.45\textwidth]{loss_history}
-\includegraphics[width=0.45\textwidth]{loss_history_gpd}
+\includegraphics[width=0.45\textwidth]{loss_history.pdf}
+\includegraphics[width=0.45\textwidth]{loss_history_gpd.pdf}
 \caption{\small
 Convergence of the loss function during the drone training
   for the case of the B
@@ -1328,8 +1355,8 @@ Convergence of the loss function during the drone training
 \end{figure*}
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.45\textwidth]{diff_history}
-\includegraphics[width=0.45\textwidth]{diff_history_gpd}
+\includegraphics[width=0.45\textwidth]{diff_history.pdf}
+\includegraphics[width=0.45\textwidth]{diff_history_gpd.pdf}
 \caption{\small
 Difference in the loss function with respect to the previous iteration
   for the case of the B
@@ -1341,8 +1368,8 @@ depict the epoch number in which the number of hyperperameters was increased.
 \end{figure*}
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.45\textwidth]{roc}
-\includegraphics[width=0.45\textwidth]{roc_gpd}
+\includegraphics[width=0.45\textwidth]{roc.pdf}
+\includegraphics[width=0.45\textwidth]{roc_gpd.pdf}
 \caption{\small
   Signal efficiency versus background rejection of the original classifier (red) and drone
   approximation (blue)
@@ -1381,7 +1408,19 @@ The identical performance show in Fig.~\ref{fig:roc} is clearly the ideal scenar
 such good agreement is not always required to give better results than other low-latency methods.
 However it is worth noting that the drones created in the examples of Sec.~\ref{sec:hep} are faster to
 evaluate. The comparison of the time taken for each model evaluation, determined from a desktop
-using a Intel Core i7-4770 processor is shown in Table~\ref{tab:comp}.
+using a Intel Core i5-7267U processor is shown in Table~\ref{tab:comp}.
+\begin{table}[t]
+  \centering
+  \caption{Hyperparameter number comparisons of the original models and drone
+  approximations for the HEP examples. \label{tab:comp_param}}
+  \begin{tabular}{l|rr}
+                   & original model                  & drone \\
+    \hline
+    B decay        & 4,111 & 121 \\
+    jet separation & 7081 & 286 \\
+  \end{tabular}
+\end{table}
+
 \begin{table}[t]
   \centering
   \caption{Processing time comparisons of the original models and drone
@@ -1389,8 +1428,8 @@ using a Intel Core i7-4770 processor is shown in Table~\ref{tab:comp}.
   \begin{tabular}{l|rr}
                    & original model                  & drone \\
     \hline
-    B decay        & $19.3 \pm 0.2 \times 10^{-5}$ s & $2.7 \pm 0.2 \times 10^{-5}$ s \\
-    jet separation & $25.2 \pm 0.2 \times 10^{-5}$ s & $2.9 \pm 0.2 \times 10^{-5}$ s \\
+    B decay        & $3.87 \times 10^{-4}$ s & $4.8 \times 10^{-5}$ s \\
+    jet separation & $4.79 \times 10^{-4}$ s & $6.2 \times 10^{-5}$ s \\
   \end{tabular}
 \end{table}
 
@@ -1425,12 +1464,6 @@ This project has received funding from the European Union’s Horizon
 grant agreement No 676108.
 
 
-% This should be taken out in the final paper
-%\addcontentsline{toc}{section}{References}
-\setboolean{inbibliography}{true}
-\bibliographystyle{elsarticle-num}
-\bibliography{main}
-\begin{comment}
 \begin{thebibliography}{10}
 \expandafter\ifx\csname url\endcsname\relax
   \def\url#1{\texttt{#1}}\fi
@@ -1504,6 +1537,15 @@ A.~Choromanska, M.~Henaff, M.~Mathieu, G.~B. Arous, Y.~LeCun,
 \newblock \href {http://arxiv.org/abs/1412.0233} {\path{arXiv:1412.0233}}.
 \newline\urlprefix\url{http://arxiv.org/abs/1412.0233}
 
+\bibitem{HORNIK1991251}
+K.~Hornik,
+  \href{http://www.sciencedirect.com/science/article/pii/089360809190009T}{Approximation
+  capabilities of multilayer feedforward networks}, Neural Networks 4~(2)
+  (1991) 251 -- 257.
+\newblock \href {http://dx.doi.org/10.1016/0893-6080(91)90009-T}
+  {\path{doi:10.1016/0893-6080(91)90009-T}}.
+\newline\urlprefix\url{http://www.sciencedirect.com/science/article/pii/089360809190009T}
+
 \bibitem{rapid}
 G.~A. Cowan, D.~C. Craik, M.~D. Needham, {RapidSim: an application for the fast
   simulation of heavy-quark hadron decays}, Comput. Phys. Commun. 214 (2017)
@@ -1512,7 +1554,65 @@ G.~A. Cowan, D.~C. Craik, M.~D. Needham, {RapidSim: an application for the fast
   \href {http://dx.doi.org/10.1016/j.cpc.2017.01.029}
   {\path{doi:10.1016/j.cpc.2017.01.029}}.
 
+\bibitem{adam}
+D.~P. Kingma, J.~Ba, \href{http://arxiv.org/abs/1412.6980}{Adam: {A} method for
+  stochastic optimization}, CoRR abs/1412.6980.
+\newblock \href {http://arxiv.org/abs/1412.6980} {\path{arXiv:1412.6980}}.
+\newline\urlprefix\url{http://arxiv.org/abs/1412.6980}
+
+\bibitem{Sjostrand:2007gs}
+T.~Sj\"{o}strand, S.~Mrenna, P.~Skands, {A brief introduction to PYTHIA 8.1},
+  Comput. Phys. Commun. 178 (2008) 852--867.
+\newblock \href {http://arxiv.org/abs/0710.3820} {\path{arXiv:0710.3820}},
+  \href {http://dx.doi.org/10.1016/j.cpc.2008.01.036}
+  {\path{doi:10.1016/j.cpc.2008.01.036}}.
+
+\bibitem{Buckley:2010ar}
+A.~Buckley, J.~Butterworth, L.~Lonnblad, D.~Grellscheid, H.~Hoeth, J.~Monk,
+  H.~Schulz, F.~Siegert, {Rivet user manual}, Comput. Phys. Commun. 184 (2013)
+  2803--2819.
+\newblock \href {http://arxiv.org/abs/1003.0694} {\path{arXiv:1003.0694}},
+  \href {http://dx.doi.org/10.1016/j.cpc.2013.05.021}
+  {\path{doi:10.1016/j.cpc.2013.05.021}}.
+
+\bibitem{Cacciari:2011ma}
+M.~Cacciari, G.~P. Salam, G.~Soyez, {FastJet User Manual}, Eur. Phys. J. C72
+  (2012) 1896.
+\newblock \href {http://arxiv.org/abs/1111.6097} {\path{arXiv:1111.6097}},
+  \href {http://dx.doi.org/10.1140/epjc/s10052-012-1896-2}
+  {\path{doi:10.1140/epjc/s10052-012-1896-2}}.
+
+\bibitem{Salam:2007xv}
+G.~P. Salam, G.~Soyez, {A Practical Seedless Infrared-Safe Cone jet algorithm},
+  JHEP 05 (2007) 086.
+\newblock \href {http://arxiv.org/abs/0704.0292} {\path{arXiv:0704.0292}},
+  \href {http://dx.doi.org/10.1088/1126-6708/2007/05/086}
+  {\path{doi:10.1088/1126-6708/2007/05/086}}.
+
+\bibitem{kt}
+S.~Catani, Y.~L. Dokshitzer, M.~H. Seymour, B.~R. Webber, {Longitudinally
+  invariant $K_t$ clustering algorithms for hadron hadron collisions}, Nucl.
+  Phys. B406 (1993) 187--224.
+\newblock \href {http://dx.doi.org/10.1016/0550-3213(93)90166-M}
+  {\path{doi:10.1016/0550-3213(93)90166-M}}.
+
+\bibitem{Atkin:2015msa}
+R.~Atkin, {Review of jet reconstruction algorithms}, J. Phys. Conf. Ser.
+  645~(1) (2015) 012008.
+\newblock \href {http://dx.doi.org/10.1088/1742-6596/645/1/012008}
+  {\path{doi:10.1088/1742-6596/645/1/012008}}.
+
+\bibitem{Komiske:2016rsd}
+P.~T. Komiske, E.~M. Metodiev, M.~D. Schwartz, {Deep learning in color: towards
+  automated quark/gluon jet discrimination}, JHEP 01 (2017) 110.
+\newblock \href {http://arxiv.org/abs/1612.01551} {\path{arXiv:1612.01551}},
+  \href {http://dx.doi.org/10.1007/JHEP01(2017)110}
+  {\path{doi:10.1007/JHEP01(2017)110}}.
+
+\bibitem{ONNX}
+\href{http://onnx.ai}{{ONNX: Open Neural Network Exchange Format}}.
+\newline\urlprefix\url{http://onnx.ai}
+
 \end{thebibliography}
-\end{comment}
 
 \end{document}
