@@ -264,13 +264,13 @@ drone.add_layer(5)
 drone.add_layer(1)
 
 conv = BasicConverter(num_epochs = epochNum, threshold = threshold, batch_size = batchSize)
-dr_data = all_data
-if len(all_data.shape) == 3:
-    if all_data.shape[1] == 1:
-        dr_data = np.squeeze(np.moveaxis(all_data, 1, 2), axis = 2)
-    else:
-        dr_data = np.squeeze(all_data, axis = 2)
-drone = conv.convert_model(drone, model, dr_data, conv_1d = True)
+# dr_data = all_data
+# if len(all_data.shape) == 3:
+#     if all_data.shape[1] == 1:
+#         dr_data = np.squeeze(np.moveaxis(all_data, 1, 2), axis = 2)
+#     else:
+#         dr_data = np.squeeze(all_data, axis = 2)
+drone = conv.convert_model(drone, all_data, base_model = model)
 conv.save_history('./converted_hist.pkl')
 
 drone.save_model('./converted_drone.pkl')
