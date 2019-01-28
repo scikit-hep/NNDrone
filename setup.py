@@ -1,9 +1,6 @@
 import sys
 from setuptools import setup
-try:
-    from setuptools import find_namespace_packages as findPKGs
-except ImportError:
-    from setuptools import find_packages as findPKGs
+from setuptools import find_packages as findPKGs
 
 pkgs = None
 pkgs = findPKGs(include=['nndrone*', 'utilities*'])
