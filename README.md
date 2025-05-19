@@ -1,3 +1,5 @@
+> **WARNING**: NNDrone is deprecated and unmaintained!
+> 
 # NNDrone: A collection of tools and algorithms to enable conversion of HEP ML to mass usage model.
 
 ![Build Status](https://travis-ci.org/scikit-hep/NNDrone.svg?branch=master)
